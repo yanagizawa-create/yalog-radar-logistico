@@ -17,6 +17,80 @@ CREATE TABLE IF NOT EXISTS public.radar_logistico_store (
 ALTER TABLE public.radar_logistico_store ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON TABLE public.radar_logistico_store FROM PUBLIC, anon, authenticated;
 
+CREATE OR REPLACE FUNCTION public.radar_autenticar_usuario(
+    p_company_id text,
+    p_login text,
+    p_senha_hash text
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
+DECLARE
+    v_user record;
+    v_module_profile text;
+    v_token text;
+BEGIN
+    IF NULLIF(trim(p_company_id), '') IS NULL
+       OR NULLIF(trim(p_login), '') IS NULL
+       OR NULLIF(p_senha_hash, '') IS NULL THEN
+        RETURN jsonb_build_object('ok', false, 'message', 'Informe empresa, usuário e senha.');
+    END IF;
+
+    SELECT u.company_id, u.login, u.nome, u.senha_hash, u.ativo,
+           e.ativo AS empresa_ativa
+      INTO v_user
+      FROM public.usuarios u
+      JOIN public.empresas e ON e.company_id = u.company_id
+     WHERE upper(u.company_id) = upper(trim(p_company_id))
+       AND lower(u.login) = lower(trim(p_login))
+     LIMIT 1;
+
+    IF NOT FOUND OR NOT COALESCE(v_user.ativo, false)
+       OR NOT COALESCE(v_user.empresa_ativa, false)
+       OR v_user.senha_hash IS NULL
+       OR v_user.senha_hash <> p_senha_hash THEN
+        RETURN jsonb_build_object('ok', false, 'message', 'Credenciais inválidas ou empresa inativa.');
+    END IF;
+
+    IF NOT public.usuario_autorizado_modulo(v_user.company_id, v_user.login, 'radarlogistico') THEN
+        RETURN jsonb_build_object('ok', false, 'message', 'O Radar não está liberado para esta empresa ou usuário.');
+    END IF;
+
+    SELECT mu.perfil
+      INTO v_module_profile
+      FROM public.module_users mu
+     WHERE mu.company_id = v_user.company_id
+       AND mu.modulo = 'radarlogistico'
+       AND lower(mu.login) = lower(v_user.login)
+       AND mu.ativo = true
+     LIMIT 1;
+
+    IF v_module_profile IS NULL THEN
+        RETURN jsonb_build_object('ok', false, 'message', 'Usuário sem vínculo ativo com o Radar.');
+    END IF;
+
+    v_token := encode(gen_random_bytes(32), 'hex');
+
+    INSERT INTO public.module_sessions
+        (token, company_id, login, modulo, created_at, expires_at, last_seen_at, revoked_at)
+    VALUES
+        (v_token, v_user.company_id, v_user.login, 'radarlogistico',
+         now(), now() + interval '12 hours', now(), NULL);
+
+    RETURN jsonb_build_object(
+        'ok', true,
+        'company_id', v_user.company_id,
+        'login', v_user.login,
+        'nome', COALESCE(v_user.nome, v_user.login),
+        'perfil', v_module_profile,
+        'modulo', 'radarlogistico',
+        'module_session_token', v_token
+    );
+END;
+$function$;
+
 CREATE OR REPLACE FUNCTION public.radar_carregar_dados(p_module_session_token text)
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -137,7 +211,7 @@ BEGIN
 END;
 $function$;
 
-REVOKE ALL ON FUNCTION public.radar_carregar_dados(text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.radar_autenticar_usuario(text, text, text) FROM PUBLIC;\nREVOKE ALL ON FUNCTION public.radar_carregar_dados(text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.radar_salvar_dados(text, bigint, jsonb) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.radar_carregar_dados(text) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.radar_autenticar_usuario(text, text, text) TO anon, authenticated;\nGRANT EXECUTE ON FUNCTION public.radar_carregar_dados(text) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.radar_salvar_dados(text, bigint, jsonb) TO anon, authenticated;
