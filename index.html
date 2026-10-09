@@ -501,7 +501,7 @@ body:not(.radar-authenticated) .app{display:none!important}
     <button class="ni" data-p="performance">⑧ &nbsp; Performance</button>
     <button class="ni" data-p="config">⑨ &nbsp; Configurações</button>
   </nav>
-  <div class="foot"><b>YALog OS</b><br>Gestão de Cargas · MVP funcional local<br><span class="pill"><i class="dot"></i> Persistência local ativa</span></div>
+  <div class="foot"><b>YALog OS</b><br>Gestão de Cargas · MVP funcional local<br><span class="pill"><i class="dot"></i> Persistência compartilhada · Supabase</span></div>
 </aside>
 <main class="main">
 <header class="top"><h2 id="pt">Inclusão de Pedidos Liberados</h2><div class="quick-search"><input id="quickSearch" placeholder="Busca rápida: pedido, carga, cliente, destino..." autocomplete="off" oninput="quickSearch(this.value)" onkeydown="if(event.key==='Escape')closeQuickSearch()"><span class="qs-icon">⌕</span><div id="quickResults" class="quick-results"></div></div><div style="display:flex;align-items:center;gap:12px"><select id="demoRole" onchange="setDemoRole(this.value)" style="background:var(--bg3);border:1px solid var(--bd2);color:#fff;border-radius:8px;padding:7px 9px;font:9px var(--mono)"><option value="EMBARCADORA">EMBARCADORA</option><option value="TRANSPORTADORA">TRANSPORTADORA</option></select><select id="demoCarrier" onchange="setDemoCarrier(this.value)" style="display:none;background:var(--bg3);border:1px solid var(--bd2);color:#fff;border-radius:8px;padding:7px 9px;font:9px var(--mono)"></select><span class="clock" id="clock"></span></div></header>
@@ -847,6 +847,29 @@ async function radarSubmitLogin(event){
     radarGate('Não foi possível entrar',e.message||'Credenciais inválidas ou acesso não autorizado.','Acesso não concedido.',true,false);
   }finally{
     if(submit){submit.disabled=false;submit.textContent='Entrar no Radar';}
+  }
+}
+async function radarLogout(){
+  const button=document.querySelector('#radarSessionIdentity button');
+  if(button){button.disabled=true;button.textContent='Saindo…';}
+  try{
+    if(radarDirty) await radarFlushSave();
+    if(radarModuleSessionToken){
+      try{await radarRpc('radar_encerrar_sessao',{p_module_session_token:radarModuleSessionToken});}
+      catch(e){console.warn('[RADAR] revogação remota não confirmada:',e.message);}
+    }
+  }finally{
+    sessionStorage.removeItem(RADAR_SESSION_KEY);
+    radarModuleSessionToken=null;
+    radarCompanyId='';radarLogin='';radarUserName='';radarProfile='';
+    radarDirty=false;
+    clearTimeout(radarSaveTimer);
+    document.body.classList.remove('radar-authenticated');
+    const app=document.querySelector('.app');if(app)app.style.display='none';
+    const identity=document.getElementById('radarSessionIdentity');if(identity)identity.remove();
+    const gate=document.getElementById('radarAuthGate');if(gate)gate.style.display='grid';
+    const form=document.getElementById('radarLoginForm');if(form)form.reset();
+    radarGate('Sessão encerrada','Para continuar, informe novamente o ID da empresa, usuário e senha.','Você saiu do Radar Logístico.',false,false);
   }
 }
 async function radarLoadSharedData(){
@@ -2599,7 +2622,16 @@ async function radarBootAuthenticated(){
     const identity=document.createElement('div');
     identity.id='radarSessionIdentity';
     identity.style.cssText='position:fixed;right:10px;bottom:10px;z-index:15;padding:7px 10px;border:1px solid rgba(0,216,245,.35);border-radius:8px;background:#031b2b;color:#9fc1ce;font:10px ui-monospace,monospace;max-width:90vw;overflow-wrap:anywhere';
-    identity.textContent='SUPABASE ✓ · '+radarCompanyId+' · '+radarUserName+' ('+radarLogin+') · '+radarProfile+' · v'+radarDataVersion;
+    const identityText=document.createElement('span');
+    identityText.textContent='SUPABASE ✓ · '+radarCompanyId+' · '+radarUserName+' ('+radarLogin+') · '+radarProfile+' · v'+radarDataVersion;
+    identity.appendChild(identityText);
+    const logoutButton=document.createElement('button');
+    logoutButton.type='button';
+    logoutButton.textContent='Sair';
+    logoutButton.setAttribute('aria-label','Encerrar sessão do Radar Logístico');
+    logoutButton.style.cssText='margin-left:10px;padding:5px 9px;border:1px solid rgba(255,151,31,.55);border-radius:6px;background:#102b3b;color:#ffbf6b;cursor:pointer;font:inherit';
+    logoutButton.addEventListener('click',radarLogout);
+    identity.appendChild(logoutButton);
     document.body.appendChild(identity);
     renderAll();
     show(D.config?.perfilDemo==='TRANSPORTADORA'?'performance':'home');
