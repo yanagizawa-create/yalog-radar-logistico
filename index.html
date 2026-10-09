@@ -2650,14 +2650,23 @@ async function radarBootAuthenticated(){
 }
 function radarBoot(){
   const params=new URLSearchParams(location.search);
-  if(params.has('handoff')){
+  const handoffRecebido=params.has('handoff');
+  if(handoffRecebido){
+    // Segurança: remover imediatamente o token temporário da barra de endereço.
+    // Não fingir que houve SSO: o backend ainda não disponibiliza no módulo
+    // uma RPC de validação/consumo do handoff confirmada nesta integração.
     params.delete('handoff');
     const qs=params.toString();history.replaceState({},document.title,location.pathname+(qs?'?'+qs:'')+location.hash);
   }
   const gate=document.getElementById('radarAuthGate');
   if(gate)gate.style.display='grid';
   document.body.classList.remove('radar-authenticated');
-  document.getElementById('radarAuthStatus').textContent=radarSupabase?'Aguardando credenciais…':'Cliente Supabase indisponível.';
+  const status=document.getElementById('radarAuthStatus');
+  if(status){
+    status.textContent=handoffRecebido
+      ?'Link do Ecossistema recebido; validação SSO ainda não está habilitada. Entre com suas credenciais do Radar.'
+      :(radarSupabase?'Aguardando credenciais…':'Cliente Supabase indisponível.');
+  }
 }
 radarBoot();
 function radarRenderMapFallback(targetId){const host=document.getElementById(targetId);if(host)host.innerHTML='<div class="radar-map-shell"><div class="radar-map-empty">Malha geográfica oficial indisponível. Nenhuma posição aproximada foi exibida.</div></div>'; }
