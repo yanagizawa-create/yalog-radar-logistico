@@ -211,9 +211,34 @@ BEGIN
 END;
 $function$;
 
+CREATE OR REPLACE FUNCTION public.radar_encerrar_sessao(p_module_session_token text)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
+DECLARE
+    v_count integer;
+BEGIN
+    IF NULLIF(p_module_session_token, '') IS NULL THEN
+        RETURN jsonb_build_object('ok', true);
+    END IF;
+
+    UPDATE public.module_sessions
+       SET revoked_at = now()
+     WHERE token = p_module_session_token
+       AND modulo = 'radarlogistico'
+       AND revoked_at IS NULL;
+
+    GET DIAGNOSTICS v_count = ROW_COUNT;
+    RETURN jsonb_build_object('ok', true, 'revoked', v_count > 0);
+END;
+$function$;
+
 REVOKE ALL ON FUNCTION public.radar_autenticar_usuario(text, text, text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.radar_carregar_dados(text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.radar_salvar_dados(text, bigint, jsonb) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.radar_autenticar_usuario(text, text, text) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.radar_encerrar_sessao(text) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.radar_carregar_dados(text) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.radar_salvar_dados(text, bigint, jsonb) TO anon, authenticated;
