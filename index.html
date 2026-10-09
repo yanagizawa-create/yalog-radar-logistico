@@ -453,8 +453,28 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opac
 @media(max-width:700px){.sb{height:auto;min-height:76px;padding:8px}.logo{width:150px;flex-basis:150px;height:68px;padding:9px 10px}.nav{height:68px}.ni{min-height:46px;padding:9px 10px;font-size:10px}.main{padding-top:76px}.top{top:76px;min-height:60px;height:auto;padding:8px 10px}.content{padding:12px}.kpis{grid-template-columns:1fr 1fr;gap:9px}.kpi{min-height:100px;padding:12px}.title{font-size:28px}}
 @media(max-width:420px){.kpis{grid-template-columns:1fr}.logo{width:136px;flex-basis:136px}.nav{min-width:0}.ni{padding:8px}.top h2{font-size:14px}}
 </style>
+
+<style id="radar-sso-gate">
+body:not(.radar-authenticated) .app{display:none!important}
+.radar-auth-gate{min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 50% 15%,rgba(0,216,245,.10),transparent 45%),#020f1a;color:#eaf8ff;font-family:Inter,Arial,sans-serif}
+.radar-auth-card{width:min(560px,100%);padding:28px;border:1px solid rgba(0,216,245,.32);border-radius:18px;background:#031b2b;box-shadow:0 20px 80px rgba(0,0,0,.35)}
+.radar-auth-card h1{margin:0 0 10px;font-size:24px}.radar-auth-card p{line-height:1.6;color:#9fc1ce}.radar-auth-card .status{font:11px ui-monospace,monospace;color:#63ddff;margin-top:16px;overflow-wrap:anywhere}
+.radar-auth-card a{color:#ffb653}.radar-auth-card button{border:1px solid rgba(0,216,245,.35);background:#062c46;color:#eaf8ff;border-radius:9px;padding:10px 14px;cursor:pointer}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+<div id="radarAuthGate" class="radar-auth-gate">
+  <section class="radar-auth-card">
+    <div style="font:10px ui-monospace,monospace;letter-spacing:.18em;color:#63ddff;margin-bottom:10px">YALOG OS · RADAR LOGÍSTICO · V070</div>
+    <h1 id="radarAuthTitle">Validando acesso ao Radar</h1>
+    <p id="radarAuthMessage">O Radar utiliza a autenticação oficial do Ecosystem. A sessão e a empresa são validadas no servidor antes de carregar os dados.</p>
+    <div class="status" id="radarAuthStatus">Conectando ao Supabase…</div>
+    <p id="radarAuthHelp" style="display:none">Abra o Radar pelo módulo correspondente dentro do <a href="https://yanagizawa-create.github.io/yalog-ecosystem/">YALog Ecosystem</a>. Não informe sua senha diretamente nesta página.</p>
+    <button id="radarAuthRetry" style="display:none" onclick="window.location.reload()">Tentar novamente</button>
+  </section>
+</div>
 <div class="app">
 <aside class="sb">
   <div class="logo">YA<span>Log</span><small>GESTÃO DE FRETES &amp; CARGAS · MVP V039</small></div>
@@ -756,7 +776,113 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opac
 <style>.form-summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:15px}.form-summary-grid .sum{margin:0;align-items:center}.manual-summary{border-color:rgba(59,130,246,.28);background:rgba(59,130,246,.08)}.manual-summary strong{color:#fff}@media(max-width:900px){.form-summary-grid{grid-template-columns:1fr}}
 </style>
 <script>
-/* V035 — Gestão de Pedidos isolada em subvisão própria de Dashboards. Sem alteração de dados ou persistência. */
+/* V070 — SSO oficial + persistência compartilhada no Supabase. */
+const RADAR_SUPABASE_URL='https://pyckcyaojztixsujbylq.supabase.co';
+const RADAR_SUPABASE_KEY='sb_publishable_iHBh-BZsjisQc0i09QUDoQ_9mZl1vfk';
+const RADAR_MODULE_ID='radarlogistico';
+const RADAR_SESSION_KEY='yalog_radar_module_session';
+let radarSupabase=null, radarModuleSessionToken=null, radarCompanyId='', radarLogin='', radarUserName='', radarProfile='';
+let radarDataVersion=0, radarSaveTimer=null, radarSaveBusy=false, radarSaveAgain=false, radarDirty=false, radarPolling=false;
+try{
+  if(window.supabase?.createClient){
+    radarSupabase=window.supabase.createClient(RADAR_SUPABASE_URL,RADAR_SUPABASE_KEY,
+      {auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+  }
+}catch(e){console.error('[RADAR] falha ao inicializar Supabase:',e);}
+function radarGate(title,message,status,showHelp=false,showRetry=false){
+  const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value;};
+  set('radarAuthTitle',title);set('radarAuthMessage',message);set('radarAuthStatus',status);
+  const help=document.getElementById('radarAuthHelp'),retry=document.getElementById('radarAuthRetry');
+  if(help)help.style.display=showHelp?'block':'none';if(retry)retry.style.display=showRetry?'inline-block':'none';
+}
+async function radarRpc(name,args){
+  if(!radarSupabase)throw new Error('Cliente Supabase indisponível.');
+  const {data,error}=await radarSupabase.rpc(name,args);
+  if(error)throw new Error(error.message||('Falha na operação '+name));
+  return data;
+}
+async function radarEstablishSession(){
+  const params=new URLSearchParams(location.search);
+  const handoff=params.get('handoff');
+  if(handoff){
+    const rows=await radarRpc('validar_handoff_modulo',{p_token:handoff});
+    const row=Array.isArray(rows)?rows[0]:rows;
+    if(!row?.module_session_token||row.modulo!==RADAR_MODULE_ID)throw new Error('O handoff é inválido, expirou ou não pertence ao Radar Logístico.');
+    radarModuleSessionToken=row.module_session_token;
+    sessionStorage.setItem(RADAR_SESSION_KEY,radarModuleSessionToken);
+    params.delete('handoff');
+    const qs=params.toString();history.replaceState({},document.title,location.pathname+(qs?'?'+qs:'')+location.hash);
+  }else{
+    radarModuleSessionToken=sessionStorage.getItem(RADAR_SESSION_KEY)||'';
+  }
+  if(!radarModuleSessionToken)throw new Error('Acesso direto não autorizado. Abra o Radar pelo YALog Ecosystem.');
+  const rows=await radarRpc('validar_sessao_modulo',{p_token:radarModuleSessionToken,p_modulo:RADAR_MODULE_ID});
+  const row=Array.isArray(rows)?rows[0]:rows;
+  if(!row?.company_id||!row?.login||row.modulo!==RADAR_MODULE_ID)throw new Error('Sua sessão não está ativa ou não possui autorização para o Radar.');
+  radarCompanyId=row.company_id;radarLogin=row.login;radarUserName=row.nome||row.login;radarProfile=row.perfil||'USUARIO';
+}
+async function radarLoadSharedData(){
+  const data=await radarRpc('radar_carregar_dados',{p_module_session_token:radarModuleSessionToken});
+  if(!data?.ok||!data.company_id||data.company_id!==radarCompanyId)throw new Error('O servidor não confirmou a empresa da sessão.');
+  radarDataVersion=Number(data.version||0);
+  const payload=data.payload&&typeof data.payload==='object'?data.payload:{};
+  D=Object.assign(base(),payload);
+  return Object.keys(payload).length>0;
+}
+async function radarPersistNow(initial=false){
+  if(!radarSupabase||!radarModuleSessionToken)return false;
+  const payload=JSON.parse(JSON.stringify(D));
+  const result=await radarRpc('radar_salvar_dados',{
+    p_module_session_token:radarModuleSessionToken,
+    p_expected_version:radarDataVersion,
+    p_payload:payload
+  });
+  if(!result?.ok){
+    radarDirty=true;
+    toast('CONFLITO: outro usuário atualizou os dados. Recarregue antes de gravar novas alterações.');
+    console.warn('[RADAR] conflito de versão na persistência:',result);
+    return false;
+  }
+  radarDataVersion=Number(result.version);
+  radarDirty=false;
+  return true;
+}
+async function radarFlushSave(){
+  if(radarSaveBusy){radarSaveAgain=true;return;}
+  radarSaveBusy=true;
+  try{
+    do{
+      radarSaveAgain=false;
+      if(!radarDirty)break;
+      const ok=await radarPersistNow();
+      if(!ok)break;
+    }while(radarSaveAgain);
+  }catch(e){
+    console.error('[RADAR] erro ao salvar dados compartilhados:',e);
+    toast('Falha ao salvar no Supabase. Seus dados permanecem nesta tela; verifique a conexão.');
+  }finally{radarSaveBusy=false;}
+}
+function scheduleRadarSave(){
+  if(!radarModuleSessionToken)return;
+  radarDirty=true;
+  clearTimeout(radarSaveTimer);
+  radarSaveTimer=setTimeout(()=>radarFlushSave(),650);
+}
+async function radarPollSharedData(){
+  if(radarPolling||radarDirty||radarSaveBusy||!radarModuleSessionToken)return;
+  radarPolling=true;
+  try{
+    const data=await radarRpc('radar_carregar_dados',{p_module_session_token:radarModuleSessionToken});
+    if(data?.ok&&data.company_id===radarCompanyId&&Number(data.version||0)>radarDataVersion){
+      const payload=data.payload&&typeof data.payload==='object'?data.payload:{};
+      D=Object.assign(base(),payload);radarDataVersion=Number(data.version);
+      renderAll();show(D.config?.perfilDemo==='TRANSPORTADORA'?'performance':'home');
+      toast('Dados compartilhados atualizados.');
+    }
+  }catch(e){console.warn('[RADAR] atualização compartilhada indisponível:',e.message);}
+  finally{radarPolling=false;}
+}
+
 const KEY='yalog_cargas_local_v2';
 const UFS='AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' ');
 const STAT=['CARGA FATURADA','CARGA LIBERADA','SEPARAÇÃO','CONFERÊNCIA','EXPEDIÇÃO','ROTA','EM RETORNO','FINALIZADA','BLOQUEADA','CANCELADA'];
@@ -772,7 +898,7 @@ const VEHICLE_TYPES=[
 {tipo:'BITREM',capacidadeKg:40000,capacidadePP:36,descricao:'Composição CVC'},
 {tipo:'RODOTREM',capacidadeKg:50000,capacidadePP:40,descricao:'Composição CVC de maior capacidade'}
 ];
-let D=loadData(), selected=new Set(), pendingXml=[], pendingUpdates=[]
+let D=base(), selected=new Set(), pendingXml=[], pendingUpdates=[]
 function defaultVehicleCatalog(){return VEHICLE_TYPES.map((v,i)=>({...v,ativo:true,prioridade:i+1,capacidadeM3:v.capacidadeM3||0,capacidadePP:v.capacidadePP||0,capacidadeUnidades:v.capacidadeUnidades||0}))}
 function vehicleCatalog(){let saved=Array.isArray(D.config?.tiposVeiculos)?D.config.tiposVeiculos:[];if(!saved.length)return defaultVehicleCatalog();return defaultVehicleCatalog().map(def=>{let x=saved.find(v=>v.tipo===def.tipo);return x?{...def,...x}:{...def}}).filter(v=>v.ativo!==false)}
 function allVehicleCatalog(){let saved=Array.isArray(D.config?.tiposVeiculos)?D.config.tiposVeiculos:[];if(!saved.length)return defaultVehicleCatalog();return defaultVehicleCatalog().map(def=>{let x=saved.find(v=>v.tipo===def.tipo);return x?{...def,...x}:{...def}})}
@@ -810,8 +936,8 @@ function showRoutePlan(index){
 
 // motoristas/veiculos permanecem no modelo apenas para compatibilidade com dados legados; o MVP V008 não os expõe à embarcadora.
 function base(){return {seq:0,config:{seqCargaInicio:1,cotacaoHoras:2,perfilDemo:'EMBARCADORA',metaFretePct:2.5,metaFreteTol:0.2,cbPesoCusto:60,cbPesoPrazo:40,cbPesoSla:0,cbPesoPerf:0,criterioOcupacao:'PESO',ocupacaoMaxPct:100,ocupacaoMinPct:0,tiposVeiculos:[]},nfs:[],cargas:[],cotacoes:[],sla:[],motoristas:[],veiculos:[],transportadoras:[],ocorrencias:[],audit:[]}}
-function loadData(){try{return Object.assign(base(),JSON.parse(localStorage.getItem(KEY)||'{}'))}catch{return base()}}
-function save(){localStorage.setItem(KEY,JSON.stringify(D))}
+function loadData(){return base()}
+function save(){scheduleRadarSave()}
 function uid(){return crypto.randomUUID?crypto.randomUUID():'id-'+Date.now()+'-'+Math.random().toString(16).slice(2)}
 function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function money(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
@@ -2357,16 +2483,107 @@ function ensureDemoDataset(){
 // V028 CLEAN TEST: prepara o ambiente para teste ponta a ponta.
 // Preserva apenas parametrizações, SLAs e transportadoras existentes.
 // Executa uma única vez por navegador/ambiente.
+
+/* V070 — dataset sintético de 90 dias. Nunca é misturado com dados reais:
+   só é criado automaticamente quando a empresa ainda não tem payload no Supabase. */
+function ensureRadar90DaySyntheticDataset(){
+  if(D.config?.radarSynthetic90DaysVersion===1)return;
+  const existingTest=D.nfs.some(n=>String(n.obs||'').includes('[RADAR-TESTE-90D]'));
+  if(existingTest){D.config.radarSynthetic90DaysVersion=1;return;}
+  const carriers=D.transportadoras.filter(t=>t.ativo!==false);
+  const destinations=[
+    ['Campinas','SP'],['Ribeirão Preto','SP'],['São Paulo','SP'],['Goiânia','GO'],
+    ['Anápolis','GO'],['Uberlândia','MG'],['Belo Horizonte','MG'],['Curitiba','PR'],
+    ['Londrina','PR'],['Rio de Janeiro','RJ'],['Salvador','BA'],['Brasília','DF']
+  ];
+  const statuses=['CARGA FORMADA','EM COTAÇÃO','FRETE RECEBIDO','LIBERADA PARA COLETA','EM SEPARAÇÃO','AGUARDANDO CARREGAMENTO','CARGA EM ROTA','ENTREGA REALIZADA','ENTREGUE COM ATRASO','ENTREGA REALIZADA COM INSUCESSO'];
+  const past=d=>{const x=new Date();x.setDate(x.getDate()-d);return x.toISOString().slice(0,10)};
+  for(let day=0;day<90;day++){
+    const destination=destinations[day%destinations.length];
+    const carrier=carriers[day%Math.max(1,carriers.length)]||null;
+    const nfNumber='90D'+String(day+1).padStart(4,'0');
+    if(D.nfs.some(n=>String(n.numero)===nfNumber))continue;
+    const weight=900+((day*137)%22000), value=Math.round(weight*(8.5+((day%7)*.35))*100)/100;
+    const nf={id:uid(),numero:nfNumber,data_faturamento:past(day),origem:'Uberaba',uf_origem:'MG',
+      remetente:'YALog — Base Sintética de Teste',cliente:'Cliente Teste '+String((day%24)+1).padStart(2,'0'),
+      cidade:destination[0],uf_destino:destination[1],transportadora:carrier?.nome||'',peso:weight,valor,
+      volumes:Math.max(1,Math.ceil(weight/850)),pendente:false,cargaId:null,
+      obs:'[RADAR-TESTE-90D] DADO FICTÍCIO — não usar em operação real.'};
+    D.nfs.push(nf);
+    if(day%3===0)continue;
+    const status=statuses[day%statuses.length], cargoNo=90000+day+1;
+    const prazoMin=1+(day%4),prazoMax=prazoMin+1+(day%2);
+    const load={id:uid(),numero:cargoNo,status,nf_ids:[nf.id],cliente:nf.cliente,origem:'Uberaba',uf_origem:'MG',
+      destino:destination[0],uf_destino:destination[1],data_coleta:past(Math.max(0,day-1)),
+      transportadora:carrier?.nome||'',transportadora_id:carrier?.id||'',
+      tipo_veiculo:weight>14000?'CARRETA':weight>6000?'TRUCK':'3/4',
+      capacidade_veiculo_kg:weight>14000?27000:weight>6000?14000:6000,
+      valor_frete:Math.round((value*(.018+(day%5)*.001))*100)/100,
+      prioridade:day%17===0?'Crítica':day%7===0?'Alta':'Normal',peso:weight,valor,volumes:nf.volumes,
+      observacoes:'[RADAR-TESTE-90D] DADO FICTÍCIO — cenário sintético para teste.',
+      eta_min:addDays(past(0),prazoMin),eta_max:addDays(past(0),prazoMax),prazo_entrega_dias:prazoMax,
+      entrega_at:(day%10===7||day%10===8)?new Date(new Date(past(day)).getTime()+12*3600000).toISOString():'',
+      status_obs:day%10===8?'Atraso sintético para teste de SLA.':''};
+    D.cargas.push(load);nf.cargaId=load.id;
+    if(carriers.length){
+      for(let j=0;j<Math.min(3,carriers.length);j++){
+        const c=carriers[(day+j)%carriers.length];
+        D.cotacoes.push({id:uid(),carga_id:load.id,transportadora_id:c.id,transportadora_nome:c.nome,
+          status:j===0&&day%4===0?'AGUARDANDO RETORNO':(j===1?'RECEBIDO':'PRAZO EXCEDIDO'),
+          enviado_at:new Date(new Date(past(day)).getTime()+8*3600000).toISOString(),
+          recebido_at:j===1?new Date(new Date(past(day)).getTime()+14*3600000).toISOString():'',
+          valor_frete:Math.round((load.valor_frete*(.94+j*.045))*100)/100,prazo_entrega_dias:prazoMax+j,
+          observacao:'[RADAR-TESTE-90D] Cotação fictícia.'});
+      }
+    }
+    if(day%9===0)D.ocorrencias.push({id:uid(),carga_id:load.id,status,observacao:'[RADAR-TESTE-90D] Ocorrência sintética para teste.',at:new Date(new Date(past(day)).getTime()+10*3600000).toISOString()});
+  }
+  D.config.radarSynthetic90DaysVersion=1;
+  D.config.radarSynthetic90DaysCreatedAt=new Date().toISOString();
+  D.config.radarSynthetic90DaysNote='Base integralmente fictícia; não usar em operação real.';
+  D.seq=Math.max(Number(D.seq||0),90090);
+  save();
+}
+
 const CLEAN_FLAG='yalog_v028_clean_test_done';
 // V063: a limpeza destrutiva de teste foi desativada. O Radar deve preservar a base existente.
 function cleanForEndToEndTest(){
   // Intencionalmente não altera D nem grava no storage.
   return false;
 }
-renderAll();
-show(D.config?.perfilDemo==='TRANSPORTADORA'?'performance':'home');
-initResponsiveNumberObserver();
-setTimeout(()=>fitResponsiveNumbers(document),50);
+
+async function radarBoot(){
+  try{
+    radarGate('Validando acesso ao Radar','Aguarde enquanto confirmamos a empresa, o usuário e as permissões no servidor.','Conectando ao Supabase…');
+    if(!radarSupabase)throw new Error('Não foi possível inicializar o Supabase. Verifique a conexão e tente novamente.');
+    await radarEstablishSession();
+    radarGate('Carregando dados da empresa','Sessão confirmada. Buscando a base compartilhada do Radar.','Empresa: '+radarCompanyId+' · Usuário: '+radarLogin);
+    const hasSharedData=await radarLoadSharedData();
+    if(!hasSharedData){
+      seed(true);
+      ensureRadar90DaySyntheticDataset();
+      await radarPersistNow(true);
+      if(!radarDataVersion)throw new Error('A base de teste não foi confirmada no Supabase. Verifique a migração de persistência.');
+    }
+    document.body.classList.add('radar-authenticated');
+    const gate=document.getElementById('radarAuthGate');if(gate)gate.style.display='none';
+    const identity=document.createElement('div');
+    identity.id='radarSessionIdentity';
+    identity.style.cssText='position:fixed;right:10px;bottom:10px;z-index:15;padding:7px 10px;border:1px solid rgba(0,216,245,.35);border-radius:8px;background:#031b2b;color:#9fc1ce;font:10px ui-monospace,monospace;max-width:90vw;overflow-wrap:anywhere';
+    identity.textContent='SUPABASE ✓ · '+radarCompanyId+' · '+radarUserName+' ('+radarLogin+') · '+radarProfile+' · v'+radarDataVersion;
+    document.body.appendChild(identity);
+    renderAll();
+    show(D.config?.perfilDemo==='TRANSPORTADORA'?'performance':'home');
+    initResponsiveNumberObserver();
+    setTimeout(()=>fitResponsiveNumbers(document),50);
+    setInterval(radarPollSharedData,15000);
+    window.addEventListener('beforeunload',()=>{if(radarDirty)console.warn('[RADAR] existem alterações aguardando sincronização.');});
+  }catch(e){
+    console.error('[RADAR] bloqueio de inicialização:',e);
+    radarGate('Acesso não liberado',e.message||'Não foi possível validar sua sessão.','Acesso bloqueado · nenhuma base operacional foi carregada.',true,true);
+  }
+}
+radarBoot();
 function radarRenderMapFallback(targetId){const host=document.getElementById(targetId);if(host)host.innerHTML='<div class="radar-map-shell"><div class="radar-map-empty">Malha geográfica oficial indisponível. Nenhuma posição aproximada foi exibida.</div></div>'; }
 
 </script>
