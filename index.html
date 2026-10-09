@@ -845,6 +845,7 @@ async function radarPersistNow(initial=false){
   }
   radarDataVersion=Number(result.version);
   radarDirty=false;
+  clearTimeout(radarSaveTimer);
   return true;
 }
 async function radarFlushSave(){
