@@ -92,6 +92,20 @@ BEGIN
             USING ERRCODE = '22023';
     END IF;
 
+    IF NOT EXISTS (
+        SELECT 1
+          FROM public.radar_logistico_store s
+         WHERE s.company_id = v_sess.company_id
+           AND s.module_id = 'radarlogistico'
+    ) AND p_expected_version <> 0 THEN
+        RETURN jsonb_build_object(
+            'ok', false,
+            'conflict', true,
+            'expected_version', p_expected_version,
+            'message', 'A base ainda não existe no servidor. Recarregue os dados antes de gravar.'
+        );
+    END IF;
+
     INSERT INTO public.radar_logistico_store
         (company_id, module_id, payload, version, updated_at, updated_by)
     VALUES
