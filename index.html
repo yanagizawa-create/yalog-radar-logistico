@@ -2560,11 +2560,14 @@ async function radarBoot(){
     await radarEstablishSession();
     radarGate('Carregando dados da empresa','Sessão confirmada. Buscando a base compartilhada do Radar.','Empresa: '+radarCompanyId+' · Usuário: '+radarLogin);
     const hasSharedData=await radarLoadSharedData();
-    if(!hasSharedData){
+    if(!hasSharedData && radarCompanyId==='YLG-RADAR-QA'){
       seed(true);
       ensureRadar90DaySyntheticDataset();
       await radarPersistNow(true);
       if(!radarDataVersion)throw new Error('A base de teste não foi confirmada no Supabase. Verifique a migração de persistência.');
+    }else if(!hasSharedData){
+      // Nunca inserir dados fictícios automaticamente em uma empresa operacional.
+      D=base();
     }
     document.body.classList.add('radar-authenticated');
     const gate=document.getElementById('radarAuthGate');if(gate)gate.style.display='none';
