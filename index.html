@@ -468,11 +468,23 @@ body:not(.radar-authenticated) .app{display:none!important}
 <div id="radarAuthGate" class="radar-auth-gate">
   <section class="radar-auth-card">
     <div style="font:10px ui-monospace,monospace;letter-spacing:.18em;color:#63ddff;margin-bottom:10px">YALOG OS · RADAR LOGÍSTICO · V070</div>
-    <h1 id="radarAuthTitle">Validando acesso ao Radar</h1>
-    <p id="radarAuthMessage">O Radar utiliza a autenticação oficial do Ecosystem. A sessão e a empresa são validadas no servidor antes de carregar os dados.</p>
-    <div class="status" id="radarAuthStatus">Conectando ao Supabase…</div>
-    <p id="radarAuthHelp" style="display:none">Abra o Radar pelo módulo correspondente dentro do <a href="https://yanagizawa-create.github.io/yalog-ecosystem/">YALog Ecosystem</a>. Não informe sua senha diretamente nesta página.</p>
-    <button id="radarAuthRetry" style="display:none" onclick="window.location.reload()">Tentar novamente</button>
+    <h1 id="radarAuthTitle">Acesso ao Radar Logístico</h1>
+    <p id="radarAuthMessage">Informe o ID da empresa, seu usuário e sua senha cadastrados na plataforma YALog. O acesso e as permissões serão validados no servidor.</p>
+    <form id="radarLoginForm" onsubmit="radarSubmitLogin(event)" style="display:grid;gap:12px;margin-top:18px;text-align:left">
+      <label style="font-size:11px;color:#9fc1ce">ID DA EMPRESA
+        <input id="radarLoginCompany" required autocomplete="organization" placeholder="Ex.: YLG-XXXXXX" style="display:block;box-sizing:border-box;width:100%;margin-top:5px;padding:12px;border-radius:8px;border:1px solid #24536a;background:#031521;color:#f4fbff">
+      </label>
+      <label style="font-size:11px;color:#9fc1ce">USUÁRIO
+        <input id="radarLoginUser" required autocomplete="username" placeholder="Seu usuário" style="display:block;box-sizing:border-box;width:100%;margin-top:5px;padding:12px;border-radius:8px;border:1px solid #24536a;background:#031521;color:#f4fbff">
+      </label>
+      <label style="font-size:11px;color:#9fc1ce">SENHA
+        <input id="radarLoginPassword" type="password" required autocomplete="current-password" placeholder="Sua senha" style="display:block;box-sizing:border-box;width:100%;margin-top:5px;padding:12px;border-radius:8px;border:1px solid #24536a;background:#031521;color:#f4fbff">
+      </label>
+      <button id="radarLoginSubmit" type="submit">Entrar no Radar</button>
+    </form>
+    <div class="status" id="radarAuthStatus">Aguardando credenciais…</div>
+    <p id="radarAuthHelp" style="display:none">Entre primeiro no <a href="https://yanagizawa-create.github.io/yalog-ecosystem/">YALog Ecosystem</a> e confirme que o Radar está liberado para sua empresa.</p>
+    <button id="radarAuthRetry" style="display:none" onclick="window.location.reload()">Recarregar</button>
   </section>
 </div>
 <div class="app">
@@ -802,24 +814,40 @@ async function radarRpc(name,args){
   return data;
 }
 async function radarEstablishSession(){
-  const params=new URLSearchParams(location.search);
-  const handoff=params.get('handoff');
-  if(handoff){
-    const rows=await radarRpc('validar_handoff_modulo',{p_token:handoff});
-    const row=Array.isArray(rows)?rows[0]:rows;
-    if(!row?.module_session_token||row.modulo!==RADAR_MODULE_ID)throw new Error('O handoff é inválido, expirou ou não pertence ao Radar Logístico.');
-    radarModuleSessionToken=row.module_session_token;
-    sessionStorage.setItem(RADAR_SESSION_KEY,radarModuleSessionToken);
-    params.delete('handoff');
-    const qs=params.toString();history.replaceState({},document.title,location.pathname+(qs?'?'+qs:'')+location.hash);
-  }else{
-    radarModuleSessionToken=sessionStorage.getItem(RADAR_SESSION_KEY)||'';
-  }
-  if(!radarModuleSessionToken)throw new Error('Acesso direto não autorizado. Abra o Radar pelo YALog Ecosystem.');
+  radarModuleSessionToken=sessionStorage.getItem(RADAR_SESSION_KEY)||'';
+  if(!radarModuleSessionToken)throw new Error('Entre com ID da empresa, usuário e senha para acessar o Radar.');
   const rows=await radarRpc('validar_sessao_modulo',{p_token:radarModuleSessionToken,p_modulo:RADAR_MODULE_ID});
   const row=Array.isArray(rows)?rows[0]:rows;
   if(!row?.company_id||!row?.login||row.modulo!==RADAR_MODULE_ID)throw new Error('Sua sessão não está ativa ou não possui autorização para o Radar.');
   radarCompanyId=row.company_id;radarLogin=row.login;radarUserName=row.nome||row.login;radarProfile=row.perfil||'USUARIO';
+}
+async function radarSubmitLogin(event){
+  event?.preventDefault();
+  const company=document.getElementById('radarLoginCompany')?.value.trim();
+  const login=document.getElementById('radarLoginUser')?.value.trim();
+  const password=document.getElementById('radarLoginPassword')?.value||'';
+  const submit=document.getElementById('radarLoginSubmit');
+  if(!company||!login||!password){radarGate('Acesso ao Radar Logístico','Preencha os três campos para continuar.','Credenciais incompletas.',true,false);return;}
+  try{
+    if(!radarSupabase)throw new Error('Supabase indisponível. Atualize a página e tente novamente.');
+    if(submit){submit.disabled=true;submit.textContent='Validando acesso…';}
+    const bytes=new TextEncoder().encode(password+'::yalog');
+    const digest=await crypto.subtle.digest('SHA-256',bytes);
+    const passwordHash=Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    document.getElementById('radarLoginPassword').value='';
+    const result=await radarRpc('radar_autenticar_usuario',{p_company_id:company,p_login:login,p_senha_hash:passwordHash});
+    if(!result?.ok||!result.module_session_token)throw new Error(result?.message||'Credenciais inválidas ou Radar não liberado para este usuário.');
+    radarModuleSessionToken=result.module_session_token;
+    sessionStorage.setItem(RADAR_SESSION_KEY,radarModuleSessionToken);
+    const params=new URLSearchParams(location.search);params.delete('handoff');
+    const qs=params.toString();history.replaceState({},document.title,location.pathname+(qs?'?'+qs:'')+location.hash);
+    await radarBootAuthenticated();
+  }catch(e){
+    console.error('[RADAR] falha de autenticação:',e);
+    radarGate('Não foi possível entrar',e.message||'Credenciais inválidas ou acesso não autorizado.','Acesso não concedido.',true,false);
+  }finally{
+    if(submit){submit.disabled=false;submit.textContent='Entrar no Radar';}
+  }
 }
 async function radarLoadSharedData(){
   const data=await radarRpc('radar_carregar_dados',{p_module_session_token:radarModuleSessionToken});
@@ -2553,10 +2581,8 @@ function cleanForEndToEndTest(){
   return false;
 }
 
-async function radarBoot(){
+async function radarBootAuthenticated(){
   try{
-    radarGate('Validando acesso ao Radar','Aguarde enquanto confirmamos a empresa, o usuário e as permissões no servidor.','Conectando ao Supabase…');
-    if(!radarSupabase)throw new Error('Não foi possível inicializar o Supabase. Verifique a conexão e tente novamente.');
     await radarEstablishSession();
     radarGate('Carregando dados da empresa','Sessão confirmada. Buscando a base compartilhada do Radar.','Empresa: '+radarCompanyId+' · Usuário: '+radarLogin);
     const hasSharedData=await radarLoadSharedData();
@@ -2566,7 +2592,6 @@ async function radarBoot(){
       await radarPersistNow(true);
       if(!radarDataVersion)throw new Error('A base de teste não foi confirmada no Supabase. Verifique a migração de persistência.');
     }else if(!hasSharedData){
-      // Nunca inserir dados fictícios automaticamente em uma empresa operacional.
       D=base();
     }
     document.body.classList.add('radar-authenticated');
@@ -2586,6 +2611,17 @@ async function radarBoot(){
     console.error('[RADAR] bloqueio de inicialização:',e);
     radarGate('Acesso não liberado',e.message||'Não foi possível validar sua sessão.','Acesso bloqueado · nenhuma base operacional foi carregada.',true,true);
   }
+}
+function radarBoot(){
+  const params=new URLSearchParams(location.search);
+  if(params.has('handoff')){
+    params.delete('handoff');
+    const qs=params.toString();history.replaceState({},document.title,location.pathname+(qs?'?'+qs:'')+location.hash);
+  }
+  const gate=document.getElementById('radarAuthGate');
+  if(gate)gate.style.display='grid';
+  document.body.classList.remove('radar-authenticated');
+  document.getElementById('radarAuthStatus').textContent=radarSupabase?'Aguardando credenciais…':'Cliente Supabase indisponível.';
 }
 radarBoot();
 function radarRenderMapFallback(targetId){const host=document.getElementById(targetId);if(host)host.innerHTML='<div class="radar-map-shell"><div class="radar-map-empty">Malha geográfica oficial indisponível. Nenhuma posição aproximada foi exibida.</div></div>'; }
