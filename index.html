@@ -852,25 +852,29 @@ async function radarSubmitLogin(event){
 async function radarLogout(){
   const button=document.querySelector('#radarSessionIdentity button');
   if(button){button.disabled=true;button.textContent='Saindo…';}
-  try{
-    if(radarDirty) await radarFlushSave();
-    if(radarModuleSessionToken){
-      try{await radarRpc('radar_encerrar_sessao',{p_module_session_token:radarModuleSessionToken});}
-      catch(e){console.warn('[RADAR] revogação remota não confirmada:',e.message);}
+  if(radarDirty){
+    await radarFlushSave();
+    if(radarDirty){
+      if(button){button.disabled=false;button.textContent='Sair';}
+      toast('Logout pausado: há alterações que ainda não foram confirmadas no servidor. Verifique a conexão e tente novamente.');
+      return;
     }
-  }finally{
-    sessionStorage.removeItem(RADAR_SESSION_KEY);
-    radarModuleSessionToken=null;
-    radarCompanyId='';radarLogin='';radarUserName='';radarProfile='';
-    radarDirty=false;
-    clearTimeout(radarSaveTimer);
-    document.body.classList.remove('radar-authenticated');
-    const app=document.querySelector('.app');if(app)app.style.display='none';
-    const identity=document.getElementById('radarSessionIdentity');if(identity)identity.remove();
-    const gate=document.getElementById('radarAuthGate');if(gate)gate.style.display='grid';
-    const form=document.getElementById('radarLoginForm');if(form)form.reset();
-    radarGate('Sessão encerrada','Para continuar, informe novamente o ID da empresa, usuário e senha.','Você saiu do Radar Logístico.',false,false);
   }
+  if(radarModuleSessionToken){
+    try{await radarRpc('radar_encerrar_sessao',{p_module_session_token:radarModuleSessionToken});}
+    catch(e){console.warn('[RADAR] revogação remota não confirmada:',e.message);}
+  }
+  sessionStorage.removeItem(RADAR_SESSION_KEY);
+  radarModuleSessionToken=null;
+  radarCompanyId='';radarLogin='';radarUserName='';radarProfile='';
+  radarDirty=false;
+  clearTimeout(radarSaveTimer);
+  document.body.classList.remove('radar-authenticated');
+  const app=document.querySelector('.app');if(app)app.style.display='none';
+  const identity=document.getElementById('radarSessionIdentity');if(identity)identity.remove();
+  const gate=document.getElementById('radarAuthGate');if(gate)gate.style.display='grid';
+  const form=document.getElementById('radarLoginForm');if(form)form.reset();
+  radarGate('Sessão encerrada','Para continuar, informe novamente o ID da empresa, usuário e senha.','Você saiu do Radar Logístico.',false,false);
 }
 async function radarLoadSharedData(){
   const data=await radarRpc('radar_carregar_dados',{p_module_session_token:radarModuleSessionToken});
