@@ -211,7 +211,9 @@ BEGIN
 END;
 $function$;
 
-REVOKE ALL ON FUNCTION public.radar_autenticar_usuario(text, text, text) FROM PUBLIC;\nREVOKE ALL ON FUNCTION public.radar_carregar_dados(text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.radar_autenticar_usuario(text, text, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.radar_carregar_dados(text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.radar_salvar_dados(text, bigint, jsonb) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.radar_autenticar_usuario(text, text, text) TO anon, authenticated;\nGRANT EXECUTE ON FUNCTION public.radar_carregar_dados(text) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.radar_autenticar_usuario(text, text, text) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.radar_carregar_dados(text) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.radar_salvar_dados(text, bigint, jsonb) TO anon, authenticated;
