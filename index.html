@@ -739,6 +739,26 @@ body:not(.radar-authenticated) .app{display:none!important}
 <section id="p-config" class="page">
   <div class="ey">ADMINISTRAÇÃO</div><div class="title">Configurações</div><div class="sub">Cadastros e parâmetros do processo de frete. A embarcadora define requisitos da carga; a transportadora executa o transporte.</div>
   <div id="configDemoData" class="card"></div>
+  <div class="card" style="margin-top:15px" id="radarUserAdmin">
+    <div class="head"><div><div class="ct">Usuários internos do Radar</div><div class="dash-sub">Crie e administre acessos individuais desta empresa. A autorização é validada no servidor.</div></div><button class="btn outline" onclick="radarRenderUsers()">Atualizar usuários</button></div>
+    <div class="notice" style="margin:10px 0">Disponível para perfis administradores autorizados. Esta tela não cria usuários MASTER nem acessos de transportadoras.</div>
+    <div class="grid2" style="margin-top:10px">
+      <div class="card" style="background:var(--bg3)">
+        <div class="ct">Criar / atualizar usuário</div>
+        <div class="filters" style="margin-top:10px">
+          <div class="fg"><label>Login</label><input id="radarUserLogin" autocomplete="off" maxlength="100" placeholder="ex.: joao.silva"></div>
+          <div class="fg"><label>Nome completo</label><input id="radarUserNameInput" autocomplete="off" maxlength="150" placeholder="Nome do colaborador"></div>
+          <div class="fg"><label>Perfil</label><select id="radarUserProfile"><option value="USUARIO">Usuário</option><option value="OPERADOR">Operador</option><option value="LIDERANCA">Liderança</option></select></div>
+          <div class="fg"><label>Senha inicial / nova senha</label><input id="radarUserPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Mínimo de 8 caracteres"></div>
+        </div>
+        <div class="actions"><button class="btn primary" onclick="radarManageUser('CRIAR')">Criar usuário</button><button class="btn outline" onclick="radarManageUser('ATUALIZAR')">Atualizar usuário</button><span id="radarUserAdminStatus" class="dash-mini-note"></span></div>
+      </div>
+      <div class="card" style="background:var(--bg3)">
+        <div class="ct">Usuários cadastrados</div>
+        <div class="table" style="margin-top:10px"><table><thead><tr><th>Login</th><th>Nome</th><th>Perfil</th><th>Status</th><th>Ação</th></tr></thead><tbody id="radarUserRows"><tr><td colspan="5">Clique em “Atualizar usuários”.</td></tr></tbody></table></div>
+      </div>
+    </div>
+  </div>
   <div class="card" style="margin-top:15px"><div class="head"><div><div class="ct">Metas e Parâmetros de Gestão</div><div class="dash-sub">Controle simples do custo logístico e da regra de recomendação de custo-benefício.</div></div><span class="dash-tag">PARAMETRIZAÇÃO</span></div>
     <div class="grid2" style="margin-top:12px"><div class="card" style="background:var(--bg3)"><div class="ct">Meta de custo logístico</div><p style="color:var(--muted);line-height:1.55;margin:7px 0 12px">Meta de frete sobre o valor total da carga transportada. O dashboard compara o realizado com esta meta.</p><div class="filters" style="margin-bottom:0"><div class="fg"><label>Meta (%)</label><input id="metaFretePct" type="number" min="0" step="0.01"></div><div class="fg"><label>Tolerância (p.p.)</label><input id="metaFreteTol" type="number" min="0" step="0.01"></div></div></div>
     <div class="card" style="background:var(--bg3)"><div class="ct">Motor de custo-benefício</div><p style="color:var(--muted);line-height:1.55;margin:7px 0 12px">Ajuste os pesos usados para recomendar a proposta recebida. A soma deve ser 100%.</p><div class="filters" style="margin-bottom:0"><div class="fg"><label>Custo (%)</label><input id="cbPesoCusto" type="number" min="0" max="100" step="1"></div><div class="fg"><label>Prazo (%)</label><input id="cbPesoPrazo" type="number" min="0" max="100" step="1"></div><div class="fg"><label>SLA (%)</label><input id="cbPesoSla" type="number" min="0" max="100" step="1"></div><div class="fg"><label>Performance (%)</label><input id="cbPesoPerf" type="number" min="0" max="100" step="1"></div></div></div></div>
@@ -813,6 +833,60 @@ async function radarRpc(name,args){
   if(error)throw new Error(error.message||('Falha na operação '+name));
   return data;
 }
+
+async function radarHashPassword(password){
+  const bytes=new TextEncoder().encode(password+'::yalog');
+  const digest=await crypto.subtle.digest('SHA-256',bytes);
+  return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function radarRenderUsers(){
+  const status=document.getElementById('radarUserAdminStatus'), rows=document.getElementById('radarUserRows');
+  if(status)status.textContent='Validando permissão…';
+  try{
+    const result=await radarRpc('radar_listar_usuarios',{p_module_session_token:radarModuleSessionToken});
+    if(!result?.ok)throw new Error('Não foi possível carregar os usuários.');
+    const users=Array.isArray(result.usuarios)?result.usuarios:[];
+    if(rows)rows.innerHTML=users.length?users.map(u=>'<tr><td>'+esc(u.login)+'</td><td>'+esc(u.nome)+'</td><td>'+esc(u.perfil)+'</td><td>'+(u.ativo?'Ativo':'Inativo')+'</td><td>'+(u.ativo?'<button class="btn outline" onclick="radarDeactivateUser(\''+String(u.login).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">Inativar</button>':'—')+'</td></tr>').join(''):'<tr><td colspan="5">Nenhum usuário do Radar cadastrado.</td></tr>';
+    if(status)status.textContent=users.length+' usuário(s) carregado(s).';
+  }catch(e){if(status)status.textContent=e.message||'Acesso negado.';if(rows)rows.innerHTML='<tr><td colspan="5">Não foi possível listar. Confirme o perfil administrador e a migração SQL.</td></tr>';}
+}
+async function radarManageUser(action){
+  const status=document.getElementById('radarUserAdminStatus');
+  const login=document.getElementById('radarUserLogin')?.value.trim();
+  const nome=document.getElementById('radarUserNameInput')?.value.trim();
+  const perfil=document.getElementById('radarUserProfile')?.value||'USUARIO';
+  const password=document.getElementById('radarUserPassword')?.value||'';
+  if(!login||!nome){toast('Informe login e nome do usuário.');return;}
+  if(password&&password.length<8){toast('A senha deve ter pelo menos 8 caracteres.');return;}
+  if(action==='CRIAR'&&!password){toast('Informe uma senha inicial para criar o usuário.');return;}
+  try{
+    if(status)status.textContent='Salvando no servidor…';
+    const hash=password?await radarHashPassword(password):null;
+    const result=await radarRpc('radar_gerenciar_usuario',{
+      p_module_session_token:radarModuleSessionToken,p_action:action,p_login:login,
+      p_nome:nome,p_perfil:perfil,p_senha_hash:hash
+    });
+    if(!result?.ok)throw new Error(result?.message||'Operação não confirmada pelo servidor.');
+    const pw=document.getElementById('radarUserPassword');if(pw)pw.value='';
+    if(status)status.textContent='Alteração confirmada pelo servidor.';
+    toast(action==='CRIAR'?'Usuário criado.':'Usuário atualizado.');
+    await radarRenderUsers();
+  }catch(e){if(status)status.textContent=e.message||'Falha ao salvar usuário.';toast('Não foi possível salvar: '+(e.message||'erro no servidor'));}
+}
+async function radarDeactivateUser(login){
+  if(!confirm('Inativar o usuário '+login+' no Radar desta empresa?'))return;
+  const status=document.getElementById('radarUserAdminStatus');
+  try{
+    const result=await radarRpc('radar_gerenciar_usuario',{
+      p_module_session_token:radarModuleSessionToken,p_action:'INATIVAR',
+      p_login:login,p_nome:null,p_perfil:'USUARIO',p_senha_hash:null
+    });
+    if(!result?.ok)throw new Error('O servidor não confirmou a inativação.');
+    if(status)status.textContent='Usuário inativado.';
+    await radarRenderUsers();
+  }catch(e){if(status)status.textContent=e.message||'Falha ao inativar usuário.';}
+}
+
 async function radarEstablishSession(){
   radarModuleSessionToken=sessionStorage.getItem(RADAR_SESSION_KEY)||'';
   if(!radarModuleSessionToken)throw new Error('Entre com ID da empresa, usuário e senha para acessar o Radar.');
