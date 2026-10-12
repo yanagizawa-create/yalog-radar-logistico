@@ -459,6 +459,11 @@ BEGIN
             USING ERRCODE = '28000';
     END IF;
 
+    IF upper(trim(v_radar_profile)) IN ('TRANSPORTADORA', 'CARRIER', 'USUARIO_TRANSPORTADORA') THEN
+        RAISE EXCEPTION 'Perfil transportadora bloqueado até disponibilização do portal restrito.'
+            USING ERRCODE = '42501';
+    END IF;
+
     RETURN jsonb_build_object(
         'ok', true,
         'company_id', v_sess.company_id,
@@ -485,6 +490,7 @@ DECLARE
     v_sess record;
     v_new_version bigint;
     v_licenca_ok boolean;
+    v_radar_profile text;
 BEGIN
     SELECT *
       INTO v_sess
@@ -518,6 +524,25 @@ BEGIN
     ) THEN
         RAISE EXCEPTION 'Sessão sem vínculo ativo de instalação do Radar.'
             USING ERRCODE = '28000';
+    END IF;
+
+    SELECT mu.perfil
+      INTO v_radar_profile
+      FROM public.module_users mu
+     WHERE mu.company_id = v_sess.company_id
+       AND lower(mu.login) = lower(v_sess.login)
+       AND mu.modulo = 'radarlogistico'
+       AND mu.ativo = true
+     LIMIT 1;
+
+    IF v_radar_profile IS NULL THEN
+        RAISE EXCEPTION 'Usuário sem vínculo ativo com o Radar.'
+            USING ERRCODE = '28000';
+    END IF;
+
+    IF upper(trim(v_radar_profile)) IN ('TRANSPORTADORA', 'CARRIER', 'USUARIO_TRANSPORTADORA') THEN
+        RAISE EXCEPTION 'Perfil transportadora bloqueado até disponibilização do portal restrito.'
+            USING ERRCODE = '42501';
     END IF;
 
     IF p_payload IS NULL OR jsonb_typeof(p_payload) <> 'object' THEN
