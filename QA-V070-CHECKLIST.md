@@ -14,7 +14,7 @@
 - [x] SSO implementado na branch por RPC isolada `radar_validar_handoff`; token é removido da URL antes da chamada e a validação é feita no backend.
 - [ ] Migração SQL aplicada e validada no projeto Supabase de QA.
 - [ ] Tenant/usuário de QA com licença `ATIVA` e validade nula ou >= data corrente confirmados; a consulta atual reportou licenças ATIVAS com validade 2026-10-10, anterior à data 2026-10-11.
-- [ ] Tenant e usuário de QA provisionados com permissão para o módulo Radar.
+- [ ] Tenant e usuário de QA provisionados com licença válida, permissão para o módulo Radar e instalação isolada.
 - [x] Contrato da RPC genérica `validar_handoff_modulo` revisado; implementação isolada `radar_validar_handoff` adicionada à migração da branch.
 - [ ] Migração que cria `radar_validar_handoff` aplicada e validada no Supabase de QA.
 - [x] Restauração automática de sessão por `sessionStorage` adicionada ao boot para F5/Ctrl+R; sessão sempre revalidada no backend.
@@ -61,3 +61,10 @@ O teste estático de sintaxe não prova que as RPCs existem ou que a migração 
 18. Logout: o vínculo Radar da sessão fica revogado; as demais instalações da empresa permanecem intocadas.
 
 **Nota:** os cenários acima são casos de teste a executar; não estão marcados como aprovados.
+
+
+## Bloqueio preventivo de portal
+
+19. Perfil real `TRANSPORTADORA` chama a RPC genérica `radar_carregar_dados`: deve receber recusa sem o payload integral da embarcadora.
+20. Perfil real `TRANSPORTADORA` chama a RPC genérica `radar_salvar_dados`: deve receber recusa e não alterar nenhum dado.
+21. A função visual `D.config.perfilDemo` não pode ser tratada como autorização. O portal comercial só será aprovado após RPCs com filtro por vínculo da transportadora no backend.
