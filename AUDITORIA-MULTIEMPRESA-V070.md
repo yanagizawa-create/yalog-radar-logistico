@@ -131,3 +131,22 @@ Consulta agregada retornada do Supabase:
 ### Interpretação cautelosa
 
 As 13 instalações de Allas provam que existem registros em `company_installations`, mas a consulta não prova que alguma sessão ativa esteja vinculada a uma dessas instalações. A função `autenticar_ecosystem` fornecida insere `installation_id = NULL`; antes de definir um bloqueio estrito no SSO, deve-se confirmar se existe algum trigger no banco que preencha essa coluna ou outro fluxo de instalação em uso. Nenhum tenant nem licença foi alterado.
+
+
+## 9. Consulta de gatilhos (11/10/2026)
+
+Consulta a `pg_trigger` para gatilhos não internos em `ecosystem_sessions` e `company_installations` retornou **nenhuma linha**. Portanto, não existe trigger nessas tabelas para preencher `installation_id` ou sincronizar instalações automaticamente.
+
+Combinado com o código apresentado de `autenticar_ecosystem`, que insere `installation_id = NULL`, o vínculo precisa ser resolvido explicitamente pelo fluxo de aplicação/RPC; não há automação existente a reaproveitar.
+
+### Estratégia de correção antes de qualquer DDL de produção
+
+Como `company_installations` e `module_sessions` são estruturas existentes e podem ser usadas por outros módulos, não alterar essas tabelas diretamente em produção. Proposta para revisão:
+
+1. Gerar/guardar um UUID de instalação no cliente do Radar (identificador técnico, nunca fonte de autorização nem armazenamento operacional).
+2. Criar uma RPC específica do Radar que valide a sessão já autenticada, registre/verifique o UUID contra o `company_id` no servidor, e impeça reaproveitar um UUID associado a outra empresa.
+3. Persistir o vínculo `module_session_token → installation_id` em estrutura própria do Radar, evitando modificar o contrato genérico de `module_sessions` ou a autenticação do Ecossistema.
+4. Validar o vínculo em cada operação do Radar e no logout, sem interferir em outros módulos.
+5. Fazer primeiro backup/snapshot do esquema e dados necessários, aplicar em tenant de QA isolado, verificar login direto + SSO + refresh + isolamento; para rollback, desabilitar as RPCs novas e remover apenas a estrutura exclusiva criada pelo Radar, após exportar qualquer registro de QA necessário. Não apagar linhas de `company_installations` nem dados operacionais existentes.
+
+**Impacto:** adiciona identificador por instalação e vínculo de sessão no escopo do Radar; não deve migrar dados operacionais nem modificar as funções genéricas do Ecossistema. A implantação permanece bloqueada até a criação/validação de um tenant de QA com licença válida.
