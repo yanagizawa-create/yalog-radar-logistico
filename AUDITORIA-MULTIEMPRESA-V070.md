@@ -220,3 +220,19 @@ O resultado recebido confirma:
 ### Próxima etapa controlada
 
 Inspecionar as definições completas das funções CRUD/permissões do Pátio, o mapeamento atual de funções de senha e o volume de vínculos por módulo. A partir disso, decidir se há helper seguro reaproveitável ou se o Radar precisa de RPCs próprias. Não revogar policies globais automaticamente nesta sprint.
+
+
+## 15. Revisão das funções de usuários e permissões do Pátio (12/10/2026)
+
+Com base nas definições SQL recebidas:
+
+- As RPCs de gestão do Pátio validam sessão via `validar_sessao_modulo(..., 'patio')`, operam no `company_id` da sessão e usam `SECURITY DEFINER` com `search_path='public'`. Esse padrão de escopo por sessão é adequado como referência, condicionado à revisão dos helpers e dos privilégios de execução.
+- `patio_usuarios_criar` é exclusiva para sessão cujo perfil normalizado seja `MASTER`; ela cria a identidade em `usuarios` e um vínculo em `module_users` com `modulo='patio'`. Não deve ser chamada pelo Radar nem simplesmente duplicada sem ajustar a política de papéis: reutilizá-la concederia acesso ao Pátio, não ao Radar.
+- `patio_usuarios_editar` atualiza tanto `usuarios.role/ativo` quanto `module_users.perfil/ativo` para Pátio. Como `usuarios` é identidade central, alterar `role` ou `ativo` por uma configuração de perfil exclusiva do Radar pode afetar outros módulos. O Radar deve distinguir estado global da identidade de acesso/perfil específico do módulo; qualquer desativação global requer ação explícita e regra central.
+- `patio_usuarios_listar` lista apenas vínculos com `modulo='patio'`; não atende a tela do Radar sem alteração da lógica de módulo.
+- `patio_permissoes_obter` tem uma lista fixa de 10 recursos do Pátio e consulta `patio_permissoes`; `patio_permissoes_definir` também valida sessão do Pátio, usa o recurso administrativo `usuarios`, valida níveis `SEM_ACESSO/VISUALIZAR/EXECUTAR` e grava nessa tabela. São específicas do Pátio e não devem ser usadas para autorizar Radar.
+- As funções do Pátio demonstram uma abordagem possível para gestão server-side (sessão, escopo da empresa, papel administrativo, alvo dentro da mesma empresa, validação e upsert), mas ainda falta revisar `patio_verificar_acesso`, normalização de perfis, defaults e restrições/grants da tabela de permissões antes de aprovar o padrão como seguro.
+- Não foi feita nenhuma alteração no banco e nenhuma policy global foi removida. O PR segue aberto; testes de banco e QA continuam pendentes.
+
+### Decisão de implementação
+Construir gestão de usuários Radar em RPCs próprias e limitadas ao módulo `radarlogistico`, usando `usuarios` apenas para a identidade central e `module_users` para perfil/ativação Radar. Separar de forma explícita: criar identidade global (somente quando não existe), conceder acesso Radar, editar perfil Radar, revogar acesso Radar e bloquear identidade global. A UI não deve receber nem poder alterar `senha_hash` por consultas genéricas. As permissões granulares do Radar precisam de recursos próprios e verificações server-side; os níveis do Pátio não autorizam automaticamente ações de carga, cotação, aprovação ou liberação.
