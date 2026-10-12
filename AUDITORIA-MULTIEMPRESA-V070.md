@@ -172,3 +172,10 @@ O delta acrescenta uma tabela exclusiva e uma RPC; atualiza a migração e o fro
 - Não existe tenant `YLG-RADAR-QA` no inventário retornado; é necessário provisionar ambiente e licença válida por procedimento aprovado.
 - A instalação agora será criada pelo Radar ao primeiro acesso e associada à empresa da sessão; não altera retroativamente as 13 instalações antigas da Allas.
 - O teste estático de JavaScript não equivale a E2E. Não há prova de acesso cruzado, refresh, replay SSO ou persistência até a execução dos testes em ambiente isolado.
+
+
+## 11. Proteção temporária do perfil TRANSPORTADORA
+
+Foi adicionado um bloqueio no backend das RPCs genéricas de carregar/gravar payload completo para perfis `TRANSPORTADORA`, `CARRIER` e `USUARIO_TRANSPORTADORA`. Até existir o portal restrito com consulta filtrada e vínculo servidor→transportadora→carga, esses perfis não recebem o payload integral da embarcadora nem podem gravá-lo.
+
+Esse é um bloqueio preventivo, não a entrega do portal de transportadora. A interface de demonstração baseada em `D.config.perfilDemo` continua sendo apenas uma demonstração visual e não concede autorização real. Nenhuma transportadora deve ser liberada para operação comercial até que os RPCs do portal restrito sejam implementados e testados.
