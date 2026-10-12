@@ -54,7 +54,16 @@
 3. Executar testes com dois tenants de QA, backup/recuperação, refresh, concorrência, bloqueios, auditoria e regressão dos recursos atuais.
 4. Somente depois aprovar merge/publicação.
 
-## 4. Bloqueio atual / próxima evidência necessária
+## 4. Correções preparadas na branch após a auditoria
+
+- Adicionada RPC específica `radar_validar_handoff(p_token)` na migração de persistência, sem substituir a RPC genérica do Ecossistema. A nova função exige token ainda válido e não consumido, módulo `radarlogistico`, sessão original do Ecossistema ativa, usuário autorizado e perfil ativo em `module_users`; bloqueia a linha do token durante o consumo para reduzir risco de replay concorrente.
+- O frontend agora captura e remove o parâmetro `handoff` da URL, chama a RPC Radar e só abre o módulo se o backend devolver uma sessão para o módulo esperado.
+- O boot agora tenta restaurar a sessão da aba após F5/Ctrl+R e revalida o token no backend. Se a validação falhar, remove a sessão local.
+- `radar_carregar_dados` retorna o perfil ativo de `module_users`, em vez de depender do papel genérico de `usuarios`, na definição proposta na migração.
+
+**Limite:** estas são alterações versionadas na branch. A migração ainda precisa ser aplicada e os fluxos verificados no projeto de QA; não houve teste E2E nem publicação.
+
+## 5. Bloqueio atual / próxima evidência necessária
 
 Antes de integrar o SSO ou acrescentar CRUDs, é necessário obter a definição real de `usuario_autorizado_modulo` e `gerar_handoff_modulo), além das colunas das tabelas de instalação/licença e dos tokens. Essa leitura é somente diagnóstica: não executar DDL nem alterar dados operacionais nesta etapa.
 
