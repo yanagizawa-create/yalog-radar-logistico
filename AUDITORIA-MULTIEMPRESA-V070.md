@@ -69,3 +69,27 @@
 Antes de integrar o SSO ou acrescentar CRUDs, é necessário obter a definição real de `usuario_autorizado_modulo` e `gerar_handoff_modulo), além das colunas das tabelas de instalação/licença e dos tokens. Essa leitura é somente diagnóstica: não executar DDL nem alterar dados operacionais nesta etapa.
 
 **Regra de release:** não mesclar nem publicar enquanto os testes de isolamento, autorização backend, persistência e regressão não estiverem aprovados.
+
+
+## 6. Inventário do esquema confirmado no Supabase (11/10/2026)
+
+A consulta de `information_schema.columns` retornou as estruturas abaixo:
+
+- `company_installations`: `installation_id` UUID + `company_id`, datas de criação/atualização.
+- `ecosystem_sessions`: sessão contém `company_id`, `login`, `installation_id` anulável, expiração e revogação.
+- `licencas`: licença por `company_id` com `plano`, `status`, `validade`, limites de usuários e módulos.
+- `module_access_tokens`: token liga `company_id`, `login`, `modulo` e `ecosystem_session_token`, expira em data/hora e tem `used_at`.
+- `module_sessions`: guarda empresa/usuário/módulo, expiração e revogação, mas não guarda `installation_id`.
+- `modulos` e `platform_modules`: o primeiro tem liberação por empresa; o segundo é o catálogo global do módulo.
+- `module_users`: vínculo ativo de usuário ao módulo e perfil.
+
+### Implicações
+
+1. A nova RPC do Radar pode validar a instalação do SSO por meio da sessão original e de `company_installations`, mas precisa definir a política para sessões antigas onde `ecosystem_sessions.installation_id` é nulo.
+2. A licença pode ser verificada por `licencas.company_id`, mas não é seguro inventar os estados válidos de `licencas.status`; devem ser lidos da lógica já usada pelo Ecossistema antes da implementação.
+3. A validação de login direto do Radar ainda depende da regra de licenciamento/instalação a definir com base nas funções oficiais do Ecossistema. Não considerar o módulo comercialmente pronto até que essa validação seja aplicada também no login direto e nas operações relevantes.
+4. `module_sessions` não contém `installation_id`; qualquer exigência de auditoria por instalação após o handoff deve ser tratada como evolução de esquema apenas se o diagnóstico provar que o vínculo indireto pela sessão não basta.
+
+### Próxima inspeção de leitura
+
+Obter as definições de `autenticar_ecosystem`, `revalidar_sessao_ecosystem` e `obter_modulos_ecosystem`, junto com a distribuição dos valores de `licencas.status`. Isso permitirá reaproveitar o contrato existente sem duplicar regras.
