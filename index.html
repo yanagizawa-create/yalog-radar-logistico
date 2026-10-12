@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>YALog OS · Gestão de Fretes &amp; Cargas · MVP V042</title>
+<title>YALog OS · Radar Logístico · V073 — Gestão de Acessos</title>
 <style>
 :root{--bg:#0f1221;--bg2:#12162b;--bg3:#1a1f38;--bg4:#20274a;--panel:#171c33;--bd:rgba(255,255,255,.09);--bd2:rgba(255,255,255,.16);--orange:#fb923c;--orange2:#fdba74;--green:#22c55e;--red:#ef4444;--blue:#3b82f6;--amber:#fbbf24;--white:#fff;--muted:#a9b1d6;--muted2:#697193;--mono:ui-monospace,SFMono-Regular,Consolas,monospace;--sans:Inter,Arial,sans-serif;--r:14px}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:#fff;font:14px var(--sans)}button,input,select,textarea{font:inherit}.app{min-height:100vh;display:flex}.sb{width:100%;height:76px;position:fixed;inset:0 0 auto 0;background:rgba(18,22,43,.98);border-bottom:1px solid var(--bd);display:flex;flex-direction:row;align-items:center;z-index:10;box-shadow:0 6px 18px rgba(0,0,0,.18)}.logo{width:245px;flex:0 0 245px;padding:14px 20px;border-right:1px solid var(--bd);font-size:19px;font-weight:800}.logo span{color:var(--orange)}.logo small{display:block;color:var(--orange2);font:10px var(--mono);letter-spacing:.12em;margin-top:5px}.nav{padding:0 8px;overflow-x:auto;overflow-y:hidden;display:flex;align-items:center;gap:2px;flex:1;min-width:0;scrollbar-width:thin}.grp{padding:0 8px;color:var(--muted2);font:8px var(--mono);letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;border-left:1px solid var(--bd);margin-left:5px}.ni{width:auto;flex:0 0 auto;border:0;background:none;color:var(--muted);text-align:left;padding:10px 11px;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}.ni:hover,.ni.on{background:rgba(251,146,60,.08);color:#fff}.ni.on{border-bottom-color:var(--orange);color:var(--orange2)}.foot{display:none}.main{margin-left:0;padding-top:76px;width:100%}.top{height:58px;position:sticky;top:76px;z-index:4;background:rgba(18,22,43,.96);border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;padding:0 25px}.top h2{font-size:17px;margin:0}.clock{font:10px var(--mono);color:var(--orange)}.content{padding:25px}.page{display:none}.page.on{display:block}.ey{color:var(--orange);font:9px var(--mono);letter-spacing:.2em;text-transform:uppercase}.title{font-size:34px;font-weight:800;margin:5px 0}.sub{color:var(--muted2);font:10px var(--mono);margin-bottom:22px}.hero,.card,.filters,.kpi{background:var(--panel);border:1px solid var(--bd);border-radius:var(--r)}.hero{padding:28px;margin-bottom:18px}.hero h1{margin:4px 0 9px;font-size:34px}.hero p{color:var(--muted);line-height:1.65;max-width:760px}.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:13px;margin:16px 0}.kpi{padding:17px;position:relative}.kpi:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--orange);border-radius:14px 0 0 14px}.kv{font-size:26px;font-weight:800;margin:6px 0}.kl{font:9px var(--mono);color:var(--muted2);text-transform:uppercase}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:15px}.card{padding:19px;margin-bottom:15px}.head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px}.ct{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}.filters{padding:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:15px}.fg{display:flex;flex-direction:column;gap:5px;min-width:145px}.fg.grow{flex:1}.fg label{font:9px var(--mono);color:var(--muted2);text-transform:uppercase}.fg input,.fg select,.fg textarea{width:100%;background:var(--bg3);border:1px solid var(--bd2);border-radius:9px;color:#fff;padding:9px 10px;outline:none}.fg textarea{min-height:75px;resize:vertical}.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--orange)}.btn{border:0;border-radius:9px;padding:9px 14px;cursor:pointer;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}.primary{background:linear-gradient(135deg,#fb923c,#fdbA74);color:#fff}.outline{background:transparent;border:1px solid var(--bd2);color:var(--muted)}.blue{background:rgba(59,130,246,.16);border:1px solid rgba(59,130,246,.3);color:#93c5fd}.green{background:rgba(34,197,94,.14);border:1px solid rgba(34,197,94,.28);color:#86efac}.danger{background:rgba(239,68,68,.16);border:1px solid rgba(239,68,68,.3);color:#fecaca}.amber{background:rgba(251,191,36,.14);border:1px solid rgba(251,191,36,.28);color:#fde68a}.table{overflow:auto;border:1px solid var(--bd);border-radius:11px}table{border-collapse:collapse;width:100%;min-width:1180px}th{padding:11px 10px;text-align:left;border-bottom:1px solid var(--bd);color:var(--muted2);font:9px var(--mono);text-transform:uppercase;white-space:nowrap}td{padding:10px;border-bottom:1px solid rgba(255,255,255,.035);color:var(--muted);font-size:11px;white-space:nowrap}tr:hover td{background:rgba(255,255,255,.025);color:#fff}.mono{font-family:var(--mono)}.badge{display:inline-block;padding:4px 7px;border-radius:6px;font:9px var(--mono)}.b-orange{background:rgba(251,146,60,.12);color:#fdba74}.b-green{background:rgba(34,197,94,.12);color:#86efac}.b-blue{background:rgba(59,130,246,.12);color:#93c5fd}.b-red{background:rgba(239,68,68,.12);color:#fecaca}.b-amber{background:rgba(251,191,36,.12);color:#fde68a}.empty{text-align:center;padding:35px;color:var(--muted2);font:10px var(--mono)}.sum{display:flex;gap:25px;flex-wrap:wrap;padding:13px 16px;background:var(--bg3);border:1px solid var(--bd);margin-bottom:15px}.sum strong{display:block;font-size:19px}.sum span{font:9px var(--mono);color:var(--muted2);text-transform:uppercase}.modal{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;padding:18px;z-index:20}.modal.open{display:flex}.box{width:min(1050px,96vw);max-height:93vh;overflow:auto;background:var(--bg2);border:1px solid var(--bd2);border-radius:18px;padding:24px;position:relative}.x{position:absolute;right:15px;top:10px;border:0;background:none;color:var(--muted);font-size:23px;cursor:pointer}.actions{display:flex;gap:8px;flex-wrap:wrap}.toast{position:fixed;right:22px;bottom:22px;background:var(--bg3);border:1px solid var(--bd2);border-left:3px solid var(--orange);padding:12px 16px;border-radius:8px;font:10px var(--mono);opacity:0;transform:translateY(8px);transition:.2s;z-index:50}.toast.show{opacity:1;transform:none}.notice{padding:11px 13px;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);color:#fbbf24;font:9px var(--mono);margin-bottom:15px}.pill{display:inline-flex;align-items:center;gap:6px}.dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
@@ -453,8 +453,40 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opac
 @media(max-width:700px){.sb{height:auto;min-height:76px;padding:8px}.logo{width:150px;flex-basis:150px;height:68px;padding:9px 10px}.nav{height:68px}.ni{min-height:46px;padding:9px 10px;font-size:10px}.main{padding-top:76px}.top{top:76px;min-height:60px;height:auto;padding:8px 10px}.content{padding:12px}.kpis{grid-template-columns:1fr 1fr;gap:9px}.kpi{min-height:100px;padding:12px}.title{font-size:28px}}
 @media(max-width:420px){.kpis{grid-template-columns:1fr}.logo{width:136px;flex-basis:136px}.nav{min-width:0}.ni{padding:8px}.top h2{font-size:14px}}
 </style>
+
+<style id="radar-sso-gate">
+body:not(.radar-authenticated) .app{display:none!important}
+.radar-auth-gate{min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 50% 15%,rgba(0,216,245,.10),transparent 45%),#020f1a;color:#eaf8ff;font-family:Inter,Arial,sans-serif}
+.radar-auth-card{width:min(560px,100%);padding:28px;border:1px solid rgba(0,216,245,.32);border-radius:18px;background:#031b2b;box-shadow:0 20px 80px rgba(0,0,0,.35)}
+.radar-auth-card h1{margin:0 0 10px;font-size:24px}.radar-auth-card p{line-height:1.6;color:#9fc1ce}.radar-auth-card .status{font:11px ui-monospace,monospace;color:#63ddff;margin-top:16px;overflow-wrap:anywhere}
+.radar-auth-card a{color:#ffb653}.radar-auth-card button{border:1px solid rgba(0,216,245,.35);background:#062c46;color:#eaf8ff;border-radius:9px;padding:10px 14px;cursor:pointer}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+<div id="radarAuthGate" class="radar-auth-gate">
+  <section class="radar-auth-card">
+    <div style="font:10px ui-monospace,monospace;letter-spacing:.18em;color:#63ddff;margin-bottom:10px">YALOG OS · RADAR LOGÍSTICO · V073</div>
+    <h1 id="radarAuthTitle">Acesso ao Radar Logístico</h1>
+    <p id="radarAuthMessage">Informe o ID da empresa, seu usuário e sua senha cadastrados na plataforma YALog. O acesso e as permissões serão validados no servidor.</p>
+    <form id="radarLoginForm" onsubmit="radarSubmitLogin(event)" style="display:grid;gap:12px;margin-top:18px;text-align:left">
+      <label style="font-size:11px;color:#9fc1ce">ID DA EMPRESA
+        <input id="radarLoginCompany" required autocomplete="organization" placeholder="Ex.: YLG-XXXXXX" style="display:block;box-sizing:border-box;width:100%;margin-top:5px;padding:12px;border-radius:8px;border:1px solid #24536a;background:#031521;color:#f4fbff">
+      </label>
+      <label style="font-size:11px;color:#9fc1ce">USUÁRIO
+        <input id="radarLoginUser" required autocomplete="username" placeholder="Seu usuário" style="display:block;box-sizing:border-box;width:100%;margin-top:5px;padding:12px;border-radius:8px;border:1px solid #24536a;background:#031521;color:#f4fbff">
+      </label>
+      <label style="font-size:11px;color:#9fc1ce">SENHA
+        <input id="radarLoginPassword" type="password" required autocomplete="current-password" placeholder="Sua senha" style="display:block;box-sizing:border-box;width:100%;margin-top:5px;padding:12px;border-radius:8px;border:1px solid #24536a;background:#031521;color:#f4fbff">
+      </label>
+      <button id="radarLoginSubmit" type="submit">Entrar no Radar</button>
+    </form>
+    <div class="status" id="radarAuthStatus">Aguardando credenciais…</div>
+    <p id="radarAuthHelp" style="display:none">Entre primeiro no <a href="https://yanagizawa-create.github.io/yalog-ecosystem/">YALog Ecosystem</a> e confirme que o Radar está liberado para sua empresa.</p>
+    <button id="radarAuthRetry" style="display:none" onclick="window.location.reload()">Recarregar</button>
+  </section>
+</div>
 <div class="app">
 <aside class="sb">
   <div class="logo">YA<span>Log</span><small>GESTÃO DE FRETES &amp; CARGAS · MVP V039</small></div>
@@ -469,10 +501,10 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opac
     <button class="ni" data-p="performance">⑧ &nbsp; Performance</button>
     <button class="ni" data-p="config">⑨ &nbsp; Configurações</button>
   </nav>
-  <div class="foot"><b>YALog OS</b><br>Gestão de Cargas · MVP funcional local<br><span class="pill"><i class="dot"></i> Persistência local ativa</span></div>
+  <div class="foot"><b>YALog OS</b><br>Gestão de Cargas · MVP funcional local<br><span class="pill"><i class="dot"></i> Persistência compartilhada · Supabase</span></div>
 </aside>
 <main class="main">
-<header class="top"><h2 id="pt">Inclusão de Pedidos Liberados</h2><div class="quick-search"><input id="quickSearch" placeholder="Busca rápida: pedido, carga, cliente, destino..." autocomplete="off" oninput="quickSearch(this.value)" onkeydown="if(event.key==='Escape')closeQuickSearch()"><span class="qs-icon">⌕</span><div id="quickResults" class="quick-results"></div></div><div style="display:flex;align-items:center;gap:12px"><select id="demoRole" onchange="setDemoRole(this.value)" style="background:var(--bg3);border:1px solid var(--bd2);color:#fff;border-radius:8px;padding:7px 9px;font:9px var(--mono)"><option value="EMBARCADORA">EMBARCADORA</option><option value="TRANSPORTADORA">TRANSPORTADORA</option></select><select id="demoCarrier" onchange="setDemoCarrier(this.value)" style="display:none;background:var(--bg3);border:1px solid var(--bd2);color:#fff;border-radius:8px;padding:7px 9px;font:9px var(--mono)"></select><span class="clock" id="clock"></span></div></header>
+<header class="top"><h2 id="pt">Inclusão de Pedidos Liberados</h2><div class="quick-search"><input id="quickSearch" placeholder="Busca rápida: pedido, carga, cliente, destino..." autocomplete="off" oninput="quickSearch(this.value)" onkeydown="if(event.key==='Escape')closeQuickSearch()"><span class="qs-icon">⌕</span><div id="quickResults" class="quick-results"></div></div><div style="display:flex;align-items:center;gap:12px"><span id="radarRoleBadge" style="display:none;border:1px solid rgba(0,216,245,.3);border-radius:8px;padding:7px 9px;color:#9fc1ce;font:9px var(--mono)"></span><span class="clock" id="clock"></span></div></header>
 <div class="content">
 
 <section id="p-home" class="page on">
@@ -707,6 +739,46 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opac
 <section id="p-config" class="page">
   <div class="ey">ADMINISTRAÇÃO</div><div class="title">Configurações</div><div class="sub">Cadastros e parâmetros do processo de frete. A embarcadora define requisitos da carga; a transportadora executa o transporte.</div>
   <div id="configDemoData" class="card"></div>
+  <div class="card" style="margin-top:15px" id="radarUserAdmin">
+    <div class="head"><div><div class="ct">Usuários internos do Radar</div><div class="dash-sub">Crie e administre acessos individuais desta empresa. A autorização é validada no servidor.</div></div><button class="btn outline" onclick="radarRenderUsers()">Atualizar usuários</button></div>
+    <div class="notice" style="margin:10px 0">Disponível para perfis administradores autorizados. Esta tela não cria usuários MASTER nem acessos de transportadoras.</div>
+    <div class="grid2" style="margin-top:10px">
+      <div class="card" style="background:var(--bg3)">
+        <div class="ct">Criar / atualizar usuário</div>
+        <div class="filters" style="margin-top:10px">
+          <div class="fg"><label>Login</label><input id="radarUserLogin" autocomplete="off" maxlength="100" placeholder="ex.: joao.silva"></div>
+          <div class="fg"><label>Nome completo</label><input id="radarUserNameInput" autocomplete="off" maxlength="150" placeholder="Nome do colaborador"></div>
+          <div class="fg"><label>Perfil</label><select id="radarUserProfile"><option value="USUARIO">Usuário</option><option value="OPERADOR">Operador</option><option value="LIDERANCA">Liderança</option></select></div>
+          <div class="fg"><label>Senha inicial / nova senha</label><input id="radarUserPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Mínimo de 8 caracteres"></div>
+        </div>
+        <div class="actions"><button class="btn primary" onclick="radarManageUser('CRIAR')">Criar usuário</button><button class="btn outline" onclick="radarManageUser('ATUALIZAR')">Atualizar usuário</button><span id="radarUserAdminStatus" class="dash-mini-note"></span></div>
+      </div>
+      <div class="card" style="background:var(--bg3)">
+        <div class="ct">Usuários cadastrados</div>
+        <div class="table" style="margin-top:10px"><table><thead><tr><th>Login</th><th>Nome</th><th>Perfil</th><th>Status</th><th>Ação</th></tr></thead><tbody id="radarUserRows"><tr><td colspan="5">Clique em “Atualizar usuários”.</td></tr></tbody></table></div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:15px" id="radarCarrierUserAdmin">
+    <div class="head"><div><div class="ct">Usuários das transportadoras</div><div class="dash-sub">Vincule cada login a uma transportadora cadastrada. A criação e o vínculo são validados no servidor.</div></div><button class="btn outline" onclick="radarRenderCarrierUsers()">Atualizar transportadoras</button></div>
+    <div class="notice" style="margin:10px 0">Versão de teste: o cadastro de vínculo é separado do cadastro de colaboradores internos. Não libere dados operacionais reais de transportadoras até concluir e validar o escopo de dados no backend.</div>
+    <div class="grid2" style="margin-top:10px">
+      <div class="card" style="background:var(--bg3)">
+        <div class="ct">Criar / atualizar usuário de transportadora</div>
+        <div class="filters" style="margin-top:10px">
+          <div class="fg"><label>Transportadora</label><select id="radarCarrierUserCarrier"><option value="">Carregando transportadoras…</option></select></div>
+          <div class="fg"><label>Login</label><input id="radarCarrierUserLogin" autocomplete="off" maxlength="100" placeholder="ex.: motorista.01"></div>
+          <div class="fg"><label>Nome completo</label><input id="radarCarrierUserName" autocomplete="off" maxlength="150" placeholder="Nome do colaborador"></div>
+          <div class="fg"><label>Senha inicial / nova senha</label><input id="radarCarrierUserPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Mínimo de 8 caracteres"></div>
+        </div>
+        <div class="actions"><button class="btn primary" onclick="radarManageCarrierUser('CRIAR')">Criar acesso</button><button class="btn outline" onclick="radarManageCarrierUser('ATUALIZAR')">Atualizar acesso</button><span id="radarCarrierUserStatus" class="dash-mini-note"></span></div>
+      </div>
+      <div class="card" style="background:var(--bg3)">
+        <div class="ct">Usuários vinculados</div>
+        <div class="table" style="margin-top:10px"><table><thead><tr><th>Transportadora</th><th>Login</th><th>Nome</th><th>Status</th><th>Ação</th></tr></thead><tbody id="radarCarrierUserRows"><tr><td colspan="5">Clique em “Atualizar transportadoras”.</td></tr></tbody></table></div>
+      </div>
+    </div>
+  </div>
   <div class="card" style="margin-top:15px"><div class="head"><div><div class="ct">Metas e Parâmetros de Gestão</div><div class="dash-sub">Controle simples do custo logístico e da regra de recomendação de custo-benefício.</div></div><span class="dash-tag">PARAMETRIZAÇÃO</span></div>
     <div class="grid2" style="margin-top:12px"><div class="card" style="background:var(--bg3)"><div class="ct">Meta de custo logístico</div><p style="color:var(--muted);line-height:1.55;margin:7px 0 12px">Meta de frete sobre o valor total da carga transportada. O dashboard compara o realizado com esta meta.</p><div class="filters" style="margin-bottom:0"><div class="fg"><label>Meta (%)</label><input id="metaFretePct" type="number" min="0" step="0.01"></div><div class="fg"><label>Tolerância (p.p.)</label><input id="metaFreteTol" type="number" min="0" step="0.01"></div></div></div>
     <div class="card" style="background:var(--bg3)"><div class="ct">Motor de custo-benefício</div><p style="color:var(--muted);line-height:1.55;margin:7px 0 12px">Ajuste os pesos usados para recomendar a proposta recebida. A soma deve ser 100%.</p><div class="filters" style="margin-bottom:0"><div class="fg"><label>Custo (%)</label><input id="cbPesoCusto" type="number" min="0" max="100" step="1"></div><div class="fg"><label>Prazo (%)</label><input id="cbPesoPrazo" type="number" min="0" max="100" step="1"></div><div class="fg"><label>SLA (%)</label><input id="cbPesoSla" type="number" min="0" max="100" step="1"></div><div class="fg"><label>Performance (%)</label><input id="cbPesoPerf" type="number" min="0" max="100" step="1"></div></div></div></div>
@@ -756,7 +828,302 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opac
 <style>.form-summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:15px}.form-summary-grid .sum{margin:0;align-items:center}.manual-summary{border-color:rgba(59,130,246,.28);background:rgba(59,130,246,.08)}.manual-summary strong{color:#fff}@media(max-width:900px){.form-summary-grid{grid-template-columns:1fr}}
 </style>
 <script>
-/* V035 — Gestão de Pedidos isolada em subvisão própria de Dashboards. Sem alteração de dados ou persistência. */
+/* V070 — SSO oficial + persistência compartilhada no Supabase. */
+const RADAR_SUPABASE_URL='https://pyckcyaojztixsujbylq.supabase.co';
+const RADAR_SUPABASE_KEY='sb_publishable_iHBh-BZsjisQc0i09QUDoQ_9mZl1vfk';
+const RADAR_MODULE_ID='radarlogistico';
+const RADAR_SESSION_KEY='yalog_radar_module_session';
+let radarSupabase=null, radarModuleSessionToken=null, radarCompanyId='', radarLogin='', radarUserName='', radarProfile='';
+let radarDataVersion=0, radarSaveTimer=null, radarSaveBusy=false, radarSaveAgain=false, radarDirty=false, radarPolling=false;
+try{
+  if(window.supabase?.createClient){
+    radarSupabase=window.supabase.createClient(RADAR_SUPABASE_URL,RADAR_SUPABASE_KEY,
+      {auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+  }
+}catch(e){console.error('[RADAR] falha ao inicializar Supabase:',e);}
+function radarGate(title,message,status,showHelp=false,showRetry=false){
+  const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value;};
+  set('radarAuthTitle',title);set('radarAuthMessage',message);set('radarAuthStatus',status);
+  const help=document.getElementById('radarAuthHelp'),retry=document.getElementById('radarAuthRetry');
+  if(help)help.style.display=showHelp?'block':'none';if(retry)retry.style.display=showRetry?'inline-block':'none';
+}
+async function radarRpc(name,args){
+  if(!radarSupabase)throw new Error('Cliente Supabase indisponível.');
+  const {data,error}=await radarSupabase.rpc(name,args);
+  if(error)throw new Error(error.message||('Falha na operação '+name));
+  return data;
+}
+
+async function radarHashPassword(password){
+  const bytes=new TextEncoder().encode(password+'::yalog');
+  const digest=await crypto.subtle.digest('SHA-256',bytes);
+  return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function radarRenderUsers(){
+  const status=document.getElementById('radarUserAdminStatus'), rows=document.getElementById('radarUserRows');
+  if(status)status.textContent='Validando permissão…';
+  try{
+    const result=await radarRpc('radar_listar_usuarios',{p_module_session_token:radarModuleSessionToken});
+    if(!result?.ok)throw new Error('Não foi possível carregar os usuários.');
+    const users=Array.isArray(result.usuarios)?result.usuarios:[];
+    if(rows)rows.innerHTML=users.length?users.map(u=>'<tr><td>'+esc(u.login)+'</td><td>'+esc(u.nome)+'</td><td>'+esc(u.perfil)+'</td><td>'+(u.ativo?'Ativo':'Inativo')+'</td><td>'+(u.ativo?'<button class="btn outline" data-radar-login="'+esc(u.login)+'" onclick="radarDeactivateUser(this.dataset.radarLogin)">Inativar</button>':'—')+'</td></tr>').join(''):'<tr><td colspan="5">Nenhum usuário do Radar cadastrado.</td></tr>';
+    if(status)status.textContent=users.length+' usuário(s) carregado(s).';
+  }catch(e){if(status)status.textContent=e.message||'Acesso negado.';if(rows)rows.innerHTML='<tr><td colspan="5">Não foi possível listar. Confirme o perfil administrador e a migração SQL.</td></tr>';}
+}
+async function radarManageUser(action){
+  const status=document.getElementById('radarUserAdminStatus');
+  const login=document.getElementById('radarUserLogin')?.value.trim();
+  const nome=document.getElementById('radarUserNameInput')?.value.trim();
+  const perfil=document.getElementById('radarUserProfile')?.value||'USUARIO';
+  const password=document.getElementById('radarUserPassword')?.value||'';
+  if(!login||!nome){toast('Informe login e nome do usuário.');return;}
+  if(password&&password.length<8){toast('A senha deve ter pelo menos 8 caracteres.');return;}
+  if(action==='CRIAR'&&!password){toast('Informe uma senha inicial para criar o usuário.');return;}
+  try{
+    if(status)status.textContent='Salvando no servidor…';
+    const hash=password?await radarHashPassword(password):null;
+    const result=await radarRpc('radar_gerenciar_usuario',{
+      p_module_session_token:radarModuleSessionToken,p_action:action,p_login:login,
+      p_nome:nome,p_perfil:perfil,p_senha_hash:hash
+    });
+    if(!result?.ok)throw new Error(result?.message||'Operação não confirmada pelo servidor.');
+    const pw=document.getElementById('radarUserPassword');if(pw)pw.value='';
+    if(status)status.textContent='Alteração confirmada pelo servidor.';
+    toast(action==='CRIAR'?'Usuário criado.':'Usuário atualizado.');
+    await radarRenderUsers();
+  }catch(e){if(status)status.textContent=e.message||'Falha ao salvar usuário.';toast('Não foi possível salvar: '+(e.message||'erro no servidor'));}
+}
+async function radarDeactivateUser(login){
+  if(!confirm('Inativar o usuário '+login+' no Radar desta empresa?'))return;
+  const status=document.getElementById('radarUserAdminStatus');
+  try{
+    const result=await radarRpc('radar_gerenciar_usuario',{
+      p_module_session_token:radarModuleSessionToken,p_action:'INATIVAR',
+      p_login:login,p_nome:null,p_perfil:'USUARIO',p_senha_hash:null
+    });
+    if(!result?.ok)throw new Error('O servidor não confirmou a inativação.');
+    if(status)status.textContent='Usuário inativado.';
+    await radarRenderUsers();
+  }catch(e){if(status)status.textContent=e.message||'Falha ao inativar usuário.';}
+}
+
+async function radarRenderCarrierUsers(){
+  const status=document.getElementById('radarCarrierUserStatus');
+  const rows=document.getElementById('radarCarrierUserRows');
+  const select=document.getElementById('radarCarrierUserCarrier');
+  try{
+    if(status)status.textContent='Carregando cadastros…';
+    const carriers=(D.transportadoras||[]).filter(t=>t.ativo!==false);
+    if(select)select.innerHTML='<option value="">Selecione a transportadora</option>'+carriers.map(t=>'<option value="'+esc(t.id)+'">'+esc(t.nome)+'</option>').join('');
+    const result=await radarRpc('radar_listar_usuarios_transportadora',{p_module_session_token:radarModuleSessionToken});
+    if(!result?.ok)throw new Error(result?.message||'Não foi possível carregar os vínculos.');
+    const users=Array.isArray(result.usuarios)?result.usuarios:[];
+    if(rows)rows.innerHTML=users.length?users.map(u=>'<tr><td>'+esc(u.transportadora_nome||u.transportadora_id)+'</td><td>'+esc(u.login)+'</td><td>'+esc(u.nome)+'</td><td>'+(u.ativo?'Ativo':'Inativo')+'</td><td>'+(u.ativo?'<button class="btn outline" data-radar-login="'+esc(u.login)+'" onclick="radarDeactivateCarrierUser(this.dataset.radarLogin)">Inativar</button>':'—')+'</td></tr>').join(''):'<tr><td colspan="5">Nenhum usuário de transportadora vinculado.</td></tr>';
+    if(status)status.textContent=users.length+' vínculo(s) carregado(s).';
+  }catch(e){
+    if(status)status.textContent=e.message||'Falha ao carregar vínculos.';
+    if(rows)rows.innerHTML='<tr><td colspan="5">RPC de gestão de transportadoras indisponível. Aplique a migração SQL do pacote V073 no Supabase.</td></tr>';
+  }
+}
+async function radarManageCarrierUser(action){
+  const status=document.getElementById('radarCarrierUserStatus');
+  const carrierId=document.getElementById('radarCarrierUserCarrier')?.value||'';
+  const login=document.getElementById('radarCarrierUserLogin')?.value.trim()||'';
+  const nome=document.getElementById('radarCarrierUserName')?.value.trim()||'';
+  const password=document.getElementById('radarCarrierUserPassword')?.value||'';
+  if(!carrierId||!login||!nome){toast('Selecione a transportadora e informe login e nome.');return;}
+  if(action==='CRIAR'&&!password){toast('Informe a senha inicial.');return;}
+  if(password.length>0&&password.length<8){toast('A senha deve ter pelo menos 8 caracteres.');return;}
+  try{
+    if(status)status.textContent='Validando e salvando no servidor…';
+    const hash=password?await radarHashPassword(password):null;
+    const result=await radarRpc('radar_gerenciar_usuario_transportadora',{
+      p_module_session_token:radarModuleSessionToken,p_action:action,
+      p_login:login,p_nome:nome,p_senha_hash:hash,p_transportadora_id:carrierId
+    });
+    if(!result?.ok)throw new Error(result?.message||'Operação não confirmada pelo servidor.');
+    const pw=document.getElementById('radarCarrierUserPassword');if(pw)pw.value='';
+    if(status)status.textContent='Alteração confirmada pelo servidor.';
+    toast(action==='CRIAR'?'Acesso da transportadora criado.':'Acesso da transportadora atualizado.');
+    await radarRenderCarrierUsers();
+  }catch(e){
+    if(status)status.textContent=e.message||'Falha ao salvar usuário.';
+    toast('Não foi possível salvar: '+(e.message||'erro no servidor'));
+  }
+}
+async function radarDeactivateCarrierUser(login){
+  if(!confirm('Inativar o acesso de transportadora '+login+'?'))return;
+  const status=document.getElementById('radarCarrierUserStatus');
+  try{
+    const result=await radarRpc('radar_gerenciar_usuario_transportadora',{
+      p_module_session_token:radarModuleSessionToken,p_action:'INATIVAR',
+      p_login:login,p_nome:null,p_senha_hash:null,
+      p_transportadora_id:document.getElementById('radarCarrierUserCarrier')?.value||''
+    });
+    if(!result?.ok)throw new Error(result?.message||'O servidor não confirmou a inativação.');
+    if(status)status.textContent='Usuário inativado.';
+    await radarRenderCarrierUsers();
+  }catch(e){if(status)status.textContent=e.message||'Falha ao inativar usuário.';}
+}
+
+async function radarEstablishSession(){
+  radarModuleSessionToken=sessionStorage.getItem(RADAR_SESSION_KEY)||'';
+  if(!radarModuleSessionToken)throw new Error('Entre com ID da empresa, usuário e senha para acessar o Radar.');
+  const rows=await radarRpc('validar_sessao_modulo',{p_token:radarModuleSessionToken,p_modulo:RADAR_MODULE_ID});
+  const row=Array.isArray(rows)?rows[0]:rows;
+  if(!row?.company_id||!row?.login||row.modulo!==RADAR_MODULE_ID)throw new Error('Sua sessão não está ativa ou não possui autorização para o Radar.');
+  radarCompanyId=row.company_id;radarLogin=row.login;radarUserName=row.nome||row.login;radarProfile=row.perfil||'USUARIO';
+}
+function radarInstallationStorageKey(){
+  // Apenas UUID técnico por empresa; nunca guardar cargas/cadastros no armazenamento local.
+  if(!radarCompanyId)throw new Error('Empresa da sessão ainda não foi confirmada.');
+  return 'yalog_radar_installation_'+encodeURIComponent(radarCompanyId);
+}
+function radarGetLocalInstallationId(){
+  const key=radarInstallationStorageKey();
+  let id=localStorage.getItem(key)||'';
+  const uuidPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  if(!uuidPattern.test(id)){
+    if(!crypto?.randomUUID)throw new Error('Este navegador não oferece geração segura do ID de instalação.');
+    id=crypto.randomUUID();
+    localStorage.setItem(key,id);
+  }
+  return id;
+}
+async function radarEnsureInstallationBinding(){
+  const proposedId=radarGetLocalInstallationId();
+  const result=await radarRpc('radar_vincular_instalacao',{
+    p_module_session_token:radarModuleSessionToken,
+    p_installation_id:proposedId
+  });
+  if(!result?.ok||result.company_id!==radarCompanyId||!result.installation_id){
+    throw new Error('O servidor não confirmou o vínculo desta instalação com a empresa autenticada.');
+  }
+  // Se já havia um vínculo oficial para esta sessão, respeitar o ID devolvido pelo servidor.
+  if(proposedId!==result.installation_id){
+    localStorage.setItem(radarInstallationStorageKey(),result.installation_id);
+  }
+}
+async function radarSubmitLogin(event){
+  event?.preventDefault();
+  const company=document.getElementById('radarLoginCompany')?.value.trim();
+  const login=document.getElementById('radarLoginUser')?.value.trim();
+  const password=document.getElementById('radarLoginPassword')?.value||'';
+  const submit=document.getElementById('radarLoginSubmit');
+  if(!company||!login||!password){radarGate('Acesso ao Radar Logístico','Preencha os três campos para continuar.','Credenciais incompletas.',true,false);return;}
+  try{
+    if(!radarSupabase)throw new Error('Supabase indisponível. Atualize a página e tente novamente.');
+    if(submit){submit.disabled=true;submit.textContent='Validando acesso…';}
+    const bytes=new TextEncoder().encode(password+'::yalog');
+    const digest=await crypto.subtle.digest('SHA-256',bytes);
+    const passwordHash=Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    document.getElementById('radarLoginPassword').value='';
+    const result=await radarRpc('radar_autenticar_usuario',{p_company_id:company,p_login:login,p_senha_hash:passwordHash});
+    if(!result?.ok||!result.module_session_token)throw new Error(result?.message||'Credenciais inválidas ou Radar não liberado para este usuário.');
+    radarModuleSessionToken=result.module_session_token;
+    sessionStorage.setItem(RADAR_SESSION_KEY,radarModuleSessionToken);
+    const params=new URLSearchParams(location.search);params.delete('handoff');
+    const qs=params.toString();history.replaceState({},document.title,location.pathname+(qs?'?'+qs:'')+location.hash);
+    await radarBootAuthenticated();
+  }catch(e){
+    console.error('[RADAR] falha de autenticação:',e);
+    radarGate('Não foi possível entrar',e.message||'Credenciais inválidas ou acesso não autorizado.','Acesso não concedido.',true,false);
+  }finally{
+    if(submit){submit.disabled=false;submit.textContent='Entrar no Radar';}
+  }
+}
+async function radarLogout(){
+  const button=document.querySelector('#radarSessionIdentity button');
+  if(button){button.disabled=true;button.textContent='Saindo…';}
+  if(radarDirty){
+    await radarFlushSave();
+    if(radarDirty){
+      if(button){button.disabled=false;button.textContent='Sair';}
+      toast('Logout pausado: há alterações que ainda não foram confirmadas no servidor. Verifique a conexão e tente novamente.');
+      return;
+    }
+  }
+  if(radarModuleSessionToken){
+    try{await radarRpc('radar_encerrar_sessao',{p_module_session_token:radarModuleSessionToken});}
+    catch(e){console.warn('[RADAR] revogação remota não confirmada:',e.message);}
+  }
+  sessionStorage.removeItem(RADAR_SESSION_KEY);
+  radarModuleSessionToken=null;
+  radarCompanyId='';radarLogin='';radarUserName='';radarProfile='';
+  radarDirty=false;
+  clearTimeout(radarSaveTimer);
+  document.body.classList.remove('radar-authenticated');
+  const app=document.querySelector('.app');if(app)app.style.display='none';
+  const identity=document.getElementById('radarSessionIdentity');if(identity)identity.remove();
+  const gate=document.getElementById('radarAuthGate');if(gate)gate.style.display='grid';
+  const form=document.getElementById('radarLoginForm');if(form)form.reset();
+  radarGate('Sessão encerrada','Para continuar, informe novamente o ID da empresa, usuário e senha.','Você saiu do Radar Logístico.',false,false);
+}
+async function radarLoadSharedData(){
+  const data=await radarRpc('radar_carregar_dados',{p_module_session_token:radarModuleSessionToken});
+  if(!data?.ok||!data.company_id||data.company_id!==radarCompanyId)throw new Error('O servidor não confirmou a empresa da sessão.');
+  radarDataVersion=Number(data.version||0);
+  if(data.perfil)radarProfile=data.perfil;
+  if(data.nome)radarUserName=data.nome;
+  const payload=data.payload&&typeof data.payload==='object'?data.payload:{};
+  D=Object.assign(base(),payload);
+  return Object.keys(payload).length>0;
+}
+async function radarPersistNow(initial=false){
+  if(!radarSupabase||!radarModuleSessionToken)return false;
+  const payload=JSON.parse(JSON.stringify(D));
+  const result=await radarRpc('radar_salvar_dados',{
+    p_module_session_token:radarModuleSessionToken,
+    p_expected_version:radarDataVersion,
+    p_payload:payload
+  });
+  if(!result?.ok){
+    radarDirty=true;
+    toast('CONFLITO: outro usuário atualizou os dados. Recarregue antes de gravar novas alterações.');
+    console.warn('[RADAR] conflito de versão na persistência:',result);
+    return false;
+  }
+  radarDataVersion=Number(result.version);
+  radarDirty=false;
+  clearTimeout(radarSaveTimer);
+  return true;
+}
+async function radarFlushSave(){
+  if(radarSaveBusy){radarSaveAgain=true;return;}
+  radarSaveBusy=true;
+  try{
+    do{
+      radarSaveAgain=false;
+      if(!radarDirty)break;
+      const ok=await radarPersistNow();
+      if(!ok)break;
+    }while(radarSaveAgain);
+  }catch(e){
+    console.error('[RADAR] erro ao salvar dados compartilhados:',e);
+    toast('Falha ao salvar no Supabase. Seus dados permanecem nesta tela; verifique a conexão.');
+  }finally{radarSaveBusy=false;}
+}
+function scheduleRadarSave(){
+  if(!radarModuleSessionToken)return;
+  radarDirty=true;
+  clearTimeout(radarSaveTimer);
+  radarSaveTimer=setTimeout(()=>radarFlushSave(),650);
+}
+async function radarPollSharedData(){
+  if(radarPolling||radarDirty||radarSaveBusy||!radarModuleSessionToken)return;
+  radarPolling=true;
+  try{
+    const data=await radarRpc('radar_carregar_dados',{p_module_session_token:radarModuleSessionToken});
+    if(data?.ok&&data.company_id===radarCompanyId&&Number(data.version||0)>radarDataVersion){
+      const payload=data.payload&&typeof data.payload==='object'?data.payload:{};
+      D=Object.assign(base(),payload);radarDataVersion=Number(data.version);
+      renderAll();show(D.config?.perfilDemo==='TRANSPORTADORA'?'performance':'home');
+      toast('Dados compartilhados atualizados.');
+    }
+  }catch(e){console.warn('[RADAR] atualização compartilhada indisponível:',e.message);}
+  finally{radarPolling=false;}
+}
+
 const KEY='yalog_cargas_local_v2';
 const UFS='AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' ');
 const STAT=['CARGA FATURADA','CARGA LIBERADA','SEPARAÇÃO','CONFERÊNCIA','EXPEDIÇÃO','ROTA','EM RETORNO','FINALIZADA','BLOQUEADA','CANCELADA'];
@@ -772,7 +1139,7 @@ const VEHICLE_TYPES=[
 {tipo:'BITREM',capacidadeKg:40000,capacidadePP:36,descricao:'Composição CVC'},
 {tipo:'RODOTREM',capacidadeKg:50000,capacidadePP:40,descricao:'Composição CVC de maior capacidade'}
 ];
-let D=loadData(), selected=new Set(), pendingXml=[], pendingUpdates=[]
+let D=base(), selected=new Set(), pendingXml=[], pendingUpdates=[]
 function defaultVehicleCatalog(){return VEHICLE_TYPES.map((v,i)=>({...v,ativo:true,prioridade:i+1,capacidadeM3:v.capacidadeM3||0,capacidadePP:v.capacidadePP||0,capacidadeUnidades:v.capacidadeUnidades||0}))}
 function vehicleCatalog(){let saved=Array.isArray(D.config?.tiposVeiculos)?D.config.tiposVeiculos:[];if(!saved.length)return defaultVehicleCatalog();return defaultVehicleCatalog().map(def=>{let x=saved.find(v=>v.tipo===def.tipo);return x?{...def,...x}:{...def}}).filter(v=>v.ativo!==false)}
 function allVehicleCatalog(){let saved=Array.isArray(D.config?.tiposVeiculos)?D.config.tiposVeiculos:[];if(!saved.length)return defaultVehicleCatalog();return defaultVehicleCatalog().map(def=>{let x=saved.find(v=>v.tipo===def.tipo);return x?{...def,...x}:{...def}})}
@@ -810,8 +1177,8 @@ function showRoutePlan(index){
 
 // motoristas/veiculos permanecem no modelo apenas para compatibilidade com dados legados; o MVP V008 não os expõe à embarcadora.
 function base(){return {seq:0,config:{seqCargaInicio:1,cotacaoHoras:2,perfilDemo:'EMBARCADORA',metaFretePct:2.5,metaFreteTol:0.2,cbPesoCusto:60,cbPesoPrazo:40,cbPesoSla:0,cbPesoPerf:0,criterioOcupacao:'PESO',ocupacaoMaxPct:100,ocupacaoMinPct:0,tiposVeiculos:[]},nfs:[],cargas:[],cotacoes:[],sla:[],motoristas:[],veiculos:[],transportadoras:[],ocorrencias:[],audit:[]}}
-function loadData(){try{return Object.assign(base(),JSON.parse(localStorage.getItem(KEY)||'{}'))}catch{return base()}}
-function save(){localStorage.setItem(KEY,JSON.stringify(D))}
+function loadData(){return base()}
+function save(){scheduleRadarSave()}
 function uid(){return crypto.randomUUID?crypto.randomUUID():'id-'+Date.now()+'-'+Math.random().toString(16).slice(2)}
 function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function money(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
@@ -831,7 +1198,7 @@ const titles={home:'Inclusão de Pedidos Liberados',billing:'Faturamento',form:'
 function show(p){document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));let page=document.getElementById('p-'+p);if(!page)return;page.classList.add('on');document.querySelectorAll('.ni').forEach(x=>x.classList.toggle('on',x.dataset.p===p));document.getElementById('pt').textContent=titles[p]||p;({home:home, billing:renderBilling, dash:()=>setDashView(currentDashView), form:renderForm, cotacao:renderCotacao, fretes:renderFretes, exec:renderExec, performance:renderPerformance, config:renderConfig, cargas:renderCargas, trans:renderTrans, sla:()=>{renderSla();renderSeqCarga()}, audit:renderAudit, backup:()=>{}}[p]||home)()}
 function refreshDemoCarrier(){let e=document.getElementById('demoCarrier');if(!e)return;let ts=(D.transportadoras||[]).filter(t=>t.ativo!==false);e.innerHTML=ts.map(t=>`<option value="${t.id}">${esc(t.nome)}</option>`).join('');if(!D.config.demoTransportadoraId&&ts[0])D.config.demoTransportadoraId=ts[0].id;if(D.config.demoTransportadoraId&&ts.some(t=>t.id===D.config.demoTransportadoraId))e.value=D.config.demoTransportadoraId;else if(ts[0]){D.config.demoTransportadoraId=ts[0].id;e.value=ts[0].id;}e.style.display=D.config.perfilDemo==='TRANSPORTADORA'?'':'none'}
 function applyRoleAccess(){let role=D.config?.perfilDemo||'EMBARCADORA';let allowed=role==='TRANSPORTADORA'?new Set(['dash','fretes','exec','performance']):new Set(['home','form','cotacao','fretes','billing','exec','dash','performance','config']);document.querySelectorAll('.ni').forEach(b=>{b.style.display=allowed.has(b.dataset.p)?'':'none'});let title=role==='TRANSPORTADORA'?'Visão da Transportadora':'Visão da Embarcadora';let el=document.querySelector('.logo small');if(el)el.textContent='GESTÃO DE FRETES & CARGAS · '+title.toUpperCase();refreshDemoCarrier()}
-function setDemoRole(role){closeModal();D.config=D.config||{};D.config.perfilDemo=role;let t=D.transportadoras.find(x=>x.ativo!==false);if(role==='TRANSPORTADORA'&&!D.config.demoTransportadoraId&&t)D.config.demoTransportadoraId=t.id;save();applyRoleAccess();renderAll();show(role==='TRANSPORTADORA'?'performance':'home');toast('Perfil de demonstração: '+(role==='TRANSPORTADORA'?'Transportadora':'Embarcadora'))}
+function setDemoRole(){toast('O perfil é definido pelo servidor após autenticação e não pode ser alterado pela interface.');}
 function setDemoCarrier(id){if(!id)return;D.config.demoTransportadoraId=id;save();renderAll();show(D.config.perfilDemo==='TRANSPORTADORA'?'performance':'home');toast('Transportadora de teste selecionada.')}
 document.querySelectorAll('.ni').forEach(b=>b.onclick=()=>show(b.dataset.p));
 function tick(){document.getElementById('clock').textContent=new Date().toLocaleString('pt-BR')}setInterval(tick,1000);tick();
@@ -2327,7 +2694,7 @@ function initListScrollBehavior(){
 }
 function normalizeData(){D.sla=(D.sla||[]).map(s=>({...s,transportadora_id:s.transportadora_id||''}));D.config=D.config||{};if(!D.config.seqCargaInicio)D.config.seqCargaInicio=1;if(!D.config.cotacaoHoras)D.config.cotacaoHoras=2;if(!D.config.perfilDemo)D.config.perfilDemo='EMBARCADORA';if(D.config.metaFretePct==null)D.config.metaFretePct=2.5;if(D.config.metaFreteTol==null)D.config.metaFreteTol=0.2;if(D.config.cbPesoCusto==null)D.config.cbPesoCusto=60;if(D.config.cbPesoPrazo==null)D.config.cbPesoPrazo=40;if(D.config.cbPesoSla==null)D.config.cbPesoSla=0;if(D.config.cbPesoPerf==null)D.config.cbPesoPerf=0;if(!D.config.criterioOcupacao)D.config.criterioOcupacao='PESO';if(D.config.ocupacaoMinPct==null)D.config.ocupacaoMinPct=0;if(D.config.ocupacaoMaxPct==null)D.config.ocupacaoMaxPct=100;if(!Array.isArray(D.config.tiposVeiculos)||!D.config.tiposVeiculos.length)D.config.tiposVeiculos=defaultVehicleCatalog();D.cotacoes=D.cotacoes||[];D.ocorrencias=D.ocorrencias||[];D.veiculos=(D.veiculos||[]).map(v=>({...v,frota_tipo:v.frota_tipo||'PRÓPRIA',status:v.ativo===false?'INATIVO':(v.status||'DISPONÍVEL'),inatividade_tipo:v.inatividade_tipo||'',inatividade_obs:v.inatividade_obs||''}));D.cargas=(D.cargas||[]).map(c=>({...c,valor_frete:Number(c.valor_frete||0),capacidade_veiculo_valor:Number(c.capacidade_veiculo_valor??c.capacidade_veiculo_kg??0),capacidade_veiculo_criterio:c.capacidade_veiculo_criterio||'PESO',ocupacao_pct:Number(c.ocupacao_pct||0),observacoes_transportadora:Array.isArray(c.observacoes_transportadora)?c.observacoes_transportadora:[]}));D.nfs=(D.nfs||[]).map(n=>({...n,filial:n.filial||n.origem||'',preco_unitario:Number(n.preco_unitario??(Number(n.quantidade||0)?Number(n.valor||0)/Number(n.quantidade||0):0)),data_pedido:n.data_pedido||n.data_faturamento||'',unidade_medida:n.unidade_medida||'',derivacao:n.derivacao||'',lote:n.lote||'',volume_m3:Number(n.volume_m3||0),paletes:Number(n.paletes||0),xml_conteudo:n.xml_conteudo||'',nf_pdf_data:n.nf_pdf_data||'',nf_pdf_name:n.nf_pdf_name||'',faturada:!!n.faturada,faturada_em:n.faturada_em||''}));D.cargas=(D.cargas||[]).map(c=>({...c,faturamento_concluido:!!c.faturamento_concluido,documentos_fiscais:Array.isArray(c.documentos_fiscais)?c.documentos_fiscais:undefined}));save()}
 function ensureDemoCargoObservations(){if(!D.cargas.length)return;let demos=D.cargas.filter(c=>String(c.numero).startsWith('10')||String(c.numero).startsWith('20'));if(!demos.length)demos=D.cargas.slice(0,5);if(demos[0]&&!cargoNotes(demos[0].id).length)demos[0].observacoes_transportadora=[{id:uid(),autor:demos[0].transportadora||'TransLog Express',autor_tipo:'TRANSPORTADORA',texto:'Carga aguardando liberação da doca. Favor confirmar janela de carregamento.',at:new Date(Date.now()-45*60000).toISOString()}];if(demos[1]&&!cargoNotes(demos[1].id).length)demos[1].observacoes_transportadora=[{id:uid(),autor:demos[1].transportadora||'Rota Brasil Transportes',autor_tipo:'TRANSPORTADORA',texto:'Veículo previsto para coleta às 14h. Necessário documento de acesso ao site.',at:new Date(Date.now()-20*60000).toISOString()}];save()}
-function renderAll(){normalizeData();ensureFreteData();applyRoleAccess();let r=document.getElementById('demoRole');if(r)r.value=D.config.perfilDemo;home();radarDashInit();renderDashboards();renderForm();renderCargas();renderTrans();renderSla();renderSeqCarga();renderAudit();renderCotacao();renderFretes();renderBilling();renderExec();renderPerformance();renderConfig();initResizableTables();initResponsiveLists();fitResponsiveNumbers()}
+function renderAll(){normalizeData();ensureFreteData();if(radarProfile){D.config=D.config||{};D.config.perfilDemo=/TRANSPORTADORA|CARRIER/i.test(radarProfile)?'TRANSPORTADORA':'EMBARCADORA';}applyRoleAccess();const roleBadge=document.getElementById('radarRoleBadge');if(roleBadge){roleBadge.style.display=radarProfile?'inline-block':'none';roleBadge.textContent=radarProfile?'PERFIL: '+radarProfile:'';}home();radarDashInit();renderDashboards();renderForm();renderCargas();renderTrans();renderSla();renderSeqCarga();renderAudit();renderCotacao();renderFretes();renderBilling();renderExec();renderPerformance();renderConfig();initResizableTables();initResponsiveLists();fitResponsiveNumbers()}
 function ensureDemoPedidosDemo(){
   if(D.config.demoPedidosV22)return;
   const clientes=[['Agro Norte Insumos','Goiânia','GO'],['Campo Forte Agro','Ribeirão Preto','SP'],['PlantaSul Agrícola','Uberlândia','MG'],['Cerrado Rural','Cuiabá','MT']];
@@ -2357,16 +2724,174 @@ function ensureDemoDataset(){
 // V028 CLEAN TEST: prepara o ambiente para teste ponta a ponta.
 // Preserva apenas parametrizações, SLAs e transportadoras existentes.
 // Executa uma única vez por navegador/ambiente.
+
+/* V070 — dataset sintético de 90 dias. Nunca é misturado com dados reais:
+   só é criado automaticamente quando a empresa ainda não tem payload no Supabase. */
+function ensureRadar90DaySyntheticDataset(){
+  if(D.config?.radarSynthetic90DaysVersion===1)return;
+  const existingTest=D.nfs.some(n=>String(n.obs||'').includes('[RADAR-TESTE-90D]'));
+  if(existingTest){D.config.radarSynthetic90DaysVersion=1;return;}
+  const carriers=D.transportadoras.filter(t=>t.ativo!==false);
+  const destinations=[
+    ['Campinas','SP'],['Ribeirão Preto','SP'],['São Paulo','SP'],['Goiânia','GO'],
+    ['Anápolis','GO'],['Uberlândia','MG'],['Belo Horizonte','MG'],['Curitiba','PR'],
+    ['Londrina','PR'],['Rio de Janeiro','RJ'],['Salvador','BA'],['Brasília','DF']
+  ];
+  const statuses=['CARGA FORMADA','EM COTAÇÃO','FRETE RECEBIDO','LIBERADA PARA COLETA','EM SEPARAÇÃO','AGUARDANDO CARREGAMENTO','CARGA EM ROTA','ENTREGA REALIZADA','ENTREGUE COM ATRASO','ENTREGA REALIZADA COM INSUCESSO'];
+  const past=d=>{const x=new Date();x.setDate(x.getDate()-d);return x.toISOString().slice(0,10)};
+  for(let day=0;day<90;day++){
+    const destination=destinations[day%destinations.length];
+    const carrier=carriers[day%Math.max(1,carriers.length)]||null;
+    const nfNumber='90D'+String(day+1).padStart(4,'0');
+    if(D.nfs.some(n=>String(n.numero)===nfNumber))continue;
+    const weight=900+((day*137)%22000), value=Math.round(weight*(8.5+((day%7)*.35))*100)/100;
+    const nf={id:uid(),numero:nfNumber,data_faturamento:past(day),origem:'Uberaba',uf_origem:'MG',
+      remetente:'YALog — Base Sintética de Teste',cliente:'Cliente Teste '+String((day%24)+1).padStart(2,'0'),
+      cidade:destination[0],uf_destino:destination[1],transportadora:carrier?.nome||'',peso:weight,valor,
+      volumes:Math.max(1,Math.ceil(weight/850)),pendente:false,cargaId:null,
+      obs:'[RADAR-TESTE-90D] DADO FICTÍCIO — não usar em operação real.'};
+    D.nfs.push(nf);
+    if(day%3===0)continue;
+    const status=statuses[day%statuses.length], cargoNo=90000+day+1;
+    const prazoMin=1+(day%4),prazoMax=prazoMin+1+(day%2);
+    const load={id:uid(),numero:cargoNo,status,nf_ids:[nf.id],cliente:nf.cliente,origem:'Uberaba',uf_origem:'MG',
+      destino:destination[0],uf_destino:destination[1],data_coleta:past(Math.max(0,day-1)),
+      transportadora:carrier?.nome||'',transportadora_id:carrier?.id||'',
+      tipo_veiculo:weight>14000?'CARRETA':weight>6000?'TRUCK':'3/4',
+      capacidade_veiculo_kg:weight>14000?27000:weight>6000?14000:6000,
+      valor_frete:Math.round((value*(.018+(day%5)*.001))*100)/100,
+      prioridade:day%17===0?'Crítica':day%7===0?'Alta':'Normal',peso:weight,valor,volumes:nf.volumes,
+      observacoes:'[RADAR-TESTE-90D] DADO FICTÍCIO — cenário sintético para teste.',
+      eta_min:addDays(past(0),prazoMin),eta_max:addDays(past(0),prazoMax),prazo_entrega_dias:prazoMax,
+      entrega_at:(day%10===7||day%10===8)?new Date(new Date(past(day)).getTime()+12*3600000).toISOString():'',
+      status_obs:day%10===8?'Atraso sintético para teste de SLA.':''};
+    D.cargas.push(load);nf.cargaId=load.id;
+    if(carriers.length){
+      for(let j=0;j<Math.min(3,carriers.length);j++){
+        const c=carriers[(day+j)%carriers.length];
+        D.cotacoes.push({id:uid(),carga_id:load.id,transportadora_id:c.id,transportadora_nome:c.nome,
+          status:j===0&&day%4===0?'AGUARDANDO RETORNO':(j===1?'RECEBIDO':'PRAZO EXCEDIDO'),
+          enviado_at:new Date(new Date(past(day)).getTime()+8*3600000).toISOString(),
+          recebido_at:j===1?new Date(new Date(past(day)).getTime()+14*3600000).toISOString():'',
+          valor_frete:Math.round((load.valor_frete*(.94+j*.045))*100)/100,prazo_entrega_dias:prazoMax+j,
+          observacao:'[RADAR-TESTE-90D] Cotação fictícia.'});
+      }
+    }
+    if(day%9===0)D.ocorrencias.push({id:uid(),carga_id:load.id,status,observacao:'[RADAR-TESTE-90D] Ocorrência sintética para teste.',at:new Date(new Date(past(day)).getTime()+10*3600000).toISOString()});
+  }
+  D.config.radarSynthetic90DaysVersion=1;
+  D.config.radarSynthetic90DaysCreatedAt=new Date().toISOString();
+  D.config.radarSynthetic90DaysNote='Base integralmente fictícia; não usar em operação real.';
+  D.seq=Math.max(Number(D.seq||0),90090);
+  save();
+}
+
 const CLEAN_FLAG='yalog_v028_clean_test_done';
 // V063: a limpeza destrutiva de teste foi desativada. O Radar deve preservar a base existente.
 function cleanForEndToEndTest(){
   // Intencionalmente não altera D nem grava no storage.
   return false;
 }
-renderAll();
-show(D.config?.perfilDemo==='TRANSPORTADORA'?'performance':'home');
-initResponsiveNumberObserver();
-setTimeout(()=>fitResponsiveNumbers(document),50);
+
+async function radarBootAuthenticated(){
+  try{
+    await radarEstablishSession();
+    await radarEnsureInstallationBinding();
+    if(/TRANSPORTADORA|CARRIER/i.test(radarProfile)){
+      throw new Error('Login de transportadora validado, mas o portal operacional está bloqueado até a ativação do escopo de dados no backend. Nenhum dado operacional foi carregado. Não remova este bloqueio antes de validar o isolamento por transportadora.');
+    }
+    radarGate('Carregando dados da empresa','Sessão e instalação confirmadas. Buscando a base compartilhada do Radar.','Empresa: '+radarCompanyId+' · Usuário: '+radarLogin);
+    const hasSharedData=await radarLoadSharedData();
+    if(!hasSharedData && radarCompanyId==='YLG-RADAR-QA'){
+      seed(true);
+      ensureRadar90DaySyntheticDataset();
+      await radarPersistNow(true);
+      if(!radarDataVersion)throw new Error('A base de teste não foi confirmada no Supabase. Verifique a migração de persistência.');
+    }else if(!hasSharedData){
+      D=base();
+    }
+    document.body.classList.add('radar-authenticated');
+    const app=document.querySelector('.app');if(app)app.style.display='';
+    const previousIdentity=document.getElementById('radarSessionIdentity');if(previousIdentity)previousIdentity.remove();
+    const gate=document.getElementById('radarAuthGate');if(gate)gate.style.display='none';
+    const identity=document.createElement('div');
+    identity.id='radarSessionIdentity';
+    identity.style.cssText='position:fixed;right:10px;bottom:10px;z-index:15;padding:7px 10px;border:1px solid rgba(0,216,245,.35);border-radius:8px;background:#031b2b;color:#9fc1ce;font:10px ui-monospace,monospace;max-width:90vw;overflow-wrap:anywhere';
+    const identityText=document.createElement('span');
+    identityText.textContent='SUPABASE ✓ · '+radarCompanyId+' · '+radarUserName+' ('+radarLogin+') · '+radarProfile+' · v'+radarDataVersion;
+    identity.appendChild(identityText);
+    const logoutButton=document.createElement('button');
+    logoutButton.type='button';
+    logoutButton.textContent='Sair';
+    logoutButton.setAttribute('aria-label','Encerrar sessão do Radar Logístico');
+    logoutButton.style.cssText='margin-left:10px;padding:5px 9px;border:1px solid rgba(255,151,31,.55);border-radius:6px;background:#102b3b;color:#ffbf6b;cursor:pointer;font:inherit';
+    logoutButton.addEventListener('click',radarLogout);
+    identity.appendChild(logoutButton);
+    document.body.appendChild(identity);
+    renderAll();
+    show(D.config?.perfilDemo==='TRANSPORTADORA'?'performance':'home');
+    initResponsiveNumberObserver();
+    setTimeout(()=>fitResponsiveNumbers(document),50);
+    setInterval(radarPollSharedData,15000);
+    window.addEventListener('beforeunload',()=>{if(radarDirty)console.warn('[RADAR] existem alterações aguardando sincronização.');});
+  }catch(e){
+    console.error('[RADAR] bloqueio de inicialização:',e);
+    sessionStorage.removeItem(RADAR_SESSION_KEY);
+    radarModuleSessionToken=null;
+    radarGate('Acesso não liberado',e.message||'Não foi possível validar sua sessão.','Acesso bloqueado · nenhuma base operacional foi carregada.',true,true);
+  }
+}
+async function radarBoot(){
+  const params=new URLSearchParams(location.search);
+  const handoffToken=params.get('handoff')||'';
+  if(handoffToken){
+    // Captura o token em memória e remove-o imediatamente da URL.
+    params.delete('handoff');
+    const qs=params.toString();
+    history.replaceState({},document.title,location.pathname+(qs?'?'+qs:'')+location.hash);
+  }
+  const gate=document.getElementById('radarAuthGate');
+  if(gate)gate.style.display='grid';
+  document.body.classList.remove('radar-authenticated');
+  const status=document.getElementById('radarAuthStatus');
+  if(status)status.textContent=radarSupabase?'Validando sessão do Radar…':'Cliente Supabase indisponível.';
+
+  // Primeiro, tenta SSO. O token é de uso único e a RPC do Radar faz a validação no servidor.
+  if(handoffToken){
+    try{
+      if(!radarSupabase)throw new Error('Cliente Supabase indisponível.');
+      const rows=await radarRpc('radar_validar_handoff',{p_token:handoffToken});
+      const row=Array.isArray(rows)?rows[0]:rows;
+      if(!row?.module_session_token||!row?.company_id||!row?.login||row.modulo!==RADAR_MODULE_ID){
+        throw new Error('O Ecossistema não confirmou um acesso válido ao Radar.');
+      }
+      radarModuleSessionToken=row.module_session_token;
+      sessionStorage.setItem(RADAR_SESSION_KEY,radarModuleSessionToken);
+      await radarBootAuthenticated();
+      return;
+    }catch(e){
+      console.error('[RADAR] falha no SSO:',e);
+      sessionStorage.removeItem(RADAR_SESSION_KEY);
+      radarModuleSessionToken=null;
+      radarGate('Validação SSO não concluída','Não foi possível validar o acesso recebido do Ecossistema. Entre com suas credenciais do Radar.','SSO recusado · nenhuma base operacional foi liberada.',true,false);
+      return;
+    }
+  }
+
+  // F5/Ctrl+R: reaproveita somente o token de sessão da aba e revalida no backend.
+  if(sessionStorage.getItem(RADAR_SESSION_KEY)){
+    try{
+      await radarBootAuthenticated();
+      return;
+    }catch(e){
+      console.warn('[RADAR] sessão restaurada não foi aceita:',e);
+      sessionStorage.removeItem(RADAR_SESSION_KEY);
+      radarModuleSessionToken=null;
+    }
+  }
+  if(status)status.textContent=radarSupabase?'Aguardando credenciais…':'Cliente Supabase indisponível.';
+}
+radarBoot();
 function radarRenderMapFallback(targetId){const host=document.getElementById(targetId);if(host)host.innerHTML='<div class="radar-map-shell"><div class="radar-map-empty">Malha geográfica oficial indisponível. Nenhuma posição aproximada foi exibida.</div></div>'; }
 
 </script>
