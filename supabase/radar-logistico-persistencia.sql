@@ -263,6 +263,7 @@ DECLARE
     v_payload jsonb;
     v_version bigint;
     v_radar_profile text;
+    v_licenca_ok boolean;
 BEGIN
     SELECT *
       INTO v_sess
@@ -272,6 +273,18 @@ BEGIN
 
     IF NOT FOUND THEN
         RAISE EXCEPTION 'Sessão do Radar inválida, expirada ou sem autorização'
+            USING ERRCODE = '28000';
+    END IF;
+
+    SELECT EXISTS (
+        SELECT 1 FROM public.licencas l
+         WHERE l.company_id = v_sess.company_id
+           AND upper(coalesce(l.status, '')) = 'ATIVA'
+           AND (l.validade IS NULL OR l.validade >= current_date)
+    ) INTO v_licenca_ok;
+
+    IF NOT COALESCE(v_licenca_ok, false) THEN
+        RAISE EXCEPTION 'Licença do Radar inválida, suspensa ou expirada.'
             USING ERRCODE = '28000';
     END IF;
 
@@ -320,6 +333,7 @@ AS $function$
 DECLARE
     v_sess record;
     v_new_version bigint;
+    v_licenca_ok boolean;
 BEGIN
     SELECT *
       INTO v_sess
@@ -329,6 +343,18 @@ BEGIN
 
     IF NOT FOUND THEN
         RAISE EXCEPTION 'Sessão do Radar inválida, expirada ou sem autorização'
+            USING ERRCODE = '28000';
+    END IF;
+
+    SELECT EXISTS (
+        SELECT 1 FROM public.licencas l
+         WHERE l.company_id = v_sess.company_id
+           AND upper(coalesce(l.status, '')) = 'ATIVA'
+           AND (l.validade IS NULL OR l.validade >= current_date)
+    ) INTO v_licenca_ok;
+
+    IF NOT COALESCE(v_licenca_ok, false) THEN
+        RAISE EXCEPTION 'Licença do Radar inválida, suspensa ou expirada.'
             USING ERRCODE = '28000';
     END IF;
 
