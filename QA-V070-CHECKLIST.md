@@ -19,6 +19,10 @@
 - [ ] Migração que cria `radar_validar_handoff` aplicada e validada no Supabase de QA.
 - [x] Restauração automática de sessão por `sessionStorage` adicionada ao boot para F5/Ctrl+R; sessão sempre revalidada no backend.
 - [x] V071: removido o seletor de perfil de demonstração do cabeçalho; a interface exibe o perfil retornado pela autenticação do servidor, sem permitir alternância manual de embarcadora/transportadora.
+- [x] V072: adicionadas RPCs `radar_listar_usuarios` e `radar_gerenciar_usuario`, com escopo limitado à empresa da sessão e autorização administrativa validada no servidor.
+- [x] V072: adicionada tela de gestão de usuários internos (criar, atualizar perfil/senha e inativar vínculo no Radar); a inativação não desativa a conta global em outros módulos.
+- [ ] Aplicar a migração SQL atualizada no Supabase de QA; as RPCs de gestão ainda não foram executadas em ambiente real.
+- [ ] Validar criação/atualização/inativação com perfis autorizados e não autorizados, e confirmar que a administração de usuários de um tenant não alcança outro tenant.
 - [ ] Portal de transportadoras permanece bloqueado no backend até existir escopo de cargas validado por transportadora; não liberar usuários de transportadora com base apenas em filtro visual.
 - [ ] Testes em navegador concluídos.
 
