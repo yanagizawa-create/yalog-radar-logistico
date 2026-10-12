@@ -17,6 +17,134 @@ CREATE TABLE IF NOT EXISTS public.radar_logistico_store (
 ALTER TABLE public.radar_logistico_store ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON TABLE public.radar_logistico_store FROM PUBLIC, anon, authenticated;
 
+-- RPC isolada do Radar: valida e consome handoff de uso único sem alterar
+-- o contrato genérico usado por outros módulos do Ecossistema.
+CREATE OR REPLACE FUNCTION public.radar_validar_handoff(p_token text)
+RETURNS TABLE(
+    company_id text,
+    login text,
+    modulo text,
+    nome text,
+    perfil text,
+    module_session_token text
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
+DECLARE
+    v_access public.module_access_tokens%ROWTYPE;
+    v_ecosystem public.ecosystem_sessions%ROWTYPE;
+    v_nome text;
+    v_perfil text;
+    v_session_token text;
+    v_used_count integer;
+BEGIN
+    IF NULLIF(trim(p_token), '') IS NULL THEN
+        RAISE EXCEPTION 'HANDOFF_INVALIDO_OU_EXPIRADO'
+            USING ERRCODE = '28000';
+    END IF;
+
+    -- Bloqueio da linha torna o consumo de token concorrente serializado.
+    SELECT mat.*
+      INTO v_access
+      FROM public.module_access_tokens mat
+     WHERE mat.token = p_token
+       AND mat.modulo = 'radarlogistico'
+       AND mat.expires_at > now()
+       AND mat.used_at IS NULL
+     LIMIT 1
+     FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'HANDOFF_INVALIDO_OU_EXPIRADO_OU_DE_OUTRO_MODULO'
+            USING ERRCODE = '28000';
+    END IF;
+
+    -- O handoff só vale enquanto a sessão de origem do Ecossistema estiver ativa.
+    SELECT es.*
+      INTO v_ecosystem
+      FROM public.ecosystem_sessions es
+     WHERE es.token = v_access.ecosystem_session_token
+       AND es.company_id = v_access.company_id
+       AND lower(es.login) = lower(v_access.login)
+       AND es.revoked_at IS NULL
+       AND es.expires_at > now()
+     LIMIT 1;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'SESSAO_ECOSYSTEM_INVALIDA_OU_EXPIRADA'
+            USING ERRCODE = '28000';
+    END IF;
+
+    IF NOT public.usuario_autorizado_modulo(
+        v_access.company_id,
+        v_access.login,
+        'radarlogistico'
+    ) THEN
+        RAISE EXCEPTION 'RADAR_NAO_AUTORIZADO_PARA_USUARIO'
+            USING ERRCODE = '28000';
+    END IF;
+
+    SELECT u.nome
+      INTO v_nome
+      FROM public.usuarios u
+     WHERE u.company_id = v_access.company_id
+       AND lower(u.login) = lower(v_access.login)
+       AND u.ativo = true
+     LIMIT 1;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'USUARIO_ECOSYSTEM_NAO_ENCONTRADO'
+            USING ERRCODE = '28000';
+    END IF;
+
+    SELECT mu.perfil
+      INTO v_perfil
+      FROM public.module_users mu
+     WHERE mu.company_id = v_access.company_id
+       AND lower(mu.login) = lower(v_access.login)
+       AND mu.modulo = 'radarlogistico'
+       AND mu.ativo = true
+     LIMIT 1;
+
+    IF v_perfil IS NULL THEN
+        RAISE EXCEPTION 'USUARIO_SEM_PERFIL_ATIVO_NO_RADAR'
+            USING ERRCODE = '28000';
+    END IF;
+
+    v_session_token := encode(gen_random_bytes(32), 'hex');
+
+    INSERT INTO public.module_sessions (
+        token, company_id, login, modulo,
+        created_at, expires_at, last_seen_at, revoked_at
+    )
+    VALUES (
+        v_session_token, v_access.company_id, v_access.login, 'radarlogistico',
+        now(), now() + interval '12 hours', now(), NULL
+    );
+
+    UPDATE public.module_access_tokens
+       SET used_at = now()
+     WHERE token = p_token
+       AND used_at IS NULL;
+
+    GET DIAGNOSTICS v_used_count = ROW_COUNT;
+    IF v_used_count <> 1 THEN
+        RAISE EXCEPTION 'HANDOFF_JA_UTILIZADO'
+            USING ERRCODE = '28000';
+    END IF;
+
+    RETURN QUERY
+    SELECT v_access.company_id,
+           v_access.login,
+           'radarlogistico'::text,
+           COALESCE(v_nome, v_access.login),
+           v_perfil,
+           v_session_token;
+END;
+$function$;
+
 CREATE OR REPLACE FUNCTION public.radar_autenticar_usuario(
     p_company_id text,
     p_login text,
@@ -101,6 +229,7 @@ DECLARE
     v_sess record;
     v_payload jsonb;
     v_version bigint;
+    v_radar_profile text;
 BEGIN
     SELECT *
       INTO v_sess
@@ -119,12 +248,26 @@ BEGIN
      WHERE s.company_id = v_sess.company_id
        AND s.module_id = 'radarlogistico';
 
+    SELECT mu.perfil
+      INTO v_radar_profile
+      FROM public.module_users mu
+     WHERE mu.company_id = v_sess.company_id
+       AND lower(mu.login) = lower(v_sess.login)
+       AND mu.modulo = 'radarlogistico'
+       AND mu.ativo = true
+     LIMIT 1;
+
+    IF v_radar_profile IS NULL THEN
+        RAISE EXCEPTION 'Usuário sem vínculo ativo com o Radar.'
+            USING ERRCODE = '28000';
+    END IF;
+
     RETURN jsonb_build_object(
         'ok', true,
         'company_id', v_sess.company_id,
         'login', v_sess.login,
         'nome', v_sess.nome,
-        'perfil', v_sess.perfil,
+        'perfil', v_radar_profile,
         'version', COALESCE(v_version, 0),
         'payload', COALESCE(v_payload, '{}'::jsonb)
     );
@@ -235,6 +378,8 @@ BEGIN
 END;
 $function$;
 
+REVOKE ALL ON FUNCTION public.radar_validar_handoff(text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.radar_validar_handoff(text) TO anon, authenticated;
 REVOKE ALL ON FUNCTION public.radar_autenticar_usuario(text, text, text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.radar_carregar_dados(text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.radar_salvar_dados(text, bigint, jsonb) FROM PUBLIC;
