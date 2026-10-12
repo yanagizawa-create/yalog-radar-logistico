@@ -821,6 +821,36 @@ async function radarEstablishSession(){
   if(!row?.company_id||!row?.login||row.modulo!==RADAR_MODULE_ID)throw new Error('Sua sessão não está ativa ou não possui autorização para o Radar.');
   radarCompanyId=row.company_id;radarLogin=row.login;radarUserName=row.nome||row.login;radarProfile=row.perfil||'USUARIO';
 }
+function radarInstallationStorageKey(){
+  // Apenas UUID técnico por empresa; nunca guardar cargas/cadastros no armazenamento local.
+  if(!radarCompanyId)throw new Error('Empresa da sessão ainda não foi confirmada.');
+  return 'yalog_radar_installation_'+encodeURIComponent(radarCompanyId);
+}
+function radarGetLocalInstallationId(){
+  const key=radarInstallationStorageKey();
+  let id=localStorage.getItem(key)||'';
+  const uuidPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  if(!uuidPattern.test(id)){
+    if(!crypto?.randomUUID)throw new Error('Este navegador não oferece geração segura do ID de instalação.');
+    id=crypto.randomUUID();
+    localStorage.setItem(key,id);
+  }
+  return id;
+}
+async function radarEnsureInstallationBinding(){
+  const proposedId=radarGetLocalInstallationId();
+  const result=await radarRpc('radar_vincular_instalacao',{
+    p_module_session_token:radarModuleSessionToken,
+    p_installation_id:proposedId
+  });
+  if(!result?.ok||result.company_id!==radarCompanyId||!result.installation_id){
+    throw new Error('O servidor não confirmou o vínculo desta instalação com a empresa autenticada.');
+  }
+  // Se já havia um vínculo oficial para esta sessão, respeitar o ID devolvido pelo servidor.
+  if(proposedId!==result.installation_id){
+    localStorage.setItem(radarInstallationStorageKey(),result.installation_id);
+  }
+}
 async function radarSubmitLogin(event){
   event?.preventDefault();
   const company=document.getElementById('radarLoginCompany')?.value.trim();
@@ -2613,7 +2643,8 @@ function cleanForEndToEndTest(){
 async function radarBootAuthenticated(){
   try{
     await radarEstablishSession();
-    radarGate('Carregando dados da empresa','Sessão confirmada. Buscando a base compartilhada do Radar.','Empresa: '+radarCompanyId+' · Usuário: '+radarLogin);
+    await radarEnsureInstallationBinding();
+    radarGate('Carregando dados da empresa','Sessão e instalação confirmadas. Buscando a base compartilhada do Radar.','Empresa: '+radarCompanyId+' · Usuário: '+radarLogin);
     const hasSharedData=await radarLoadSharedData();
     if(!hasSharedData && radarCompanyId==='YLG-RADAR-QA'){
       seed(true);
