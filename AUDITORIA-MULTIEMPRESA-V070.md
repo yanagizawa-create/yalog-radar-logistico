@@ -179,3 +179,10 @@ O delta acrescenta uma tabela exclusiva e uma RPC; atualiza a migração e o fro
 Foi adicionado um bloqueio no backend das RPCs genéricas de carregar/gravar payload completo para perfis `TRANSPORTADORA`, `CARRIER` e `USUARIO_TRANSPORTADORA`. Até existir o portal restrito com consulta filtrada e vínculo servidor→transportadora→carga, esses perfis não recebem o payload integral da embarcadora nem podem gravá-lo.
 
 Esse é um bloqueio preventivo, não a entrega do portal de transportadora. A interface de demonstração baseada em `D.config.perfilDemo` continua sendo apenas uma demonstração visual e não concede autorização real. Nenhuma transportadora deve ser liberada para operação comercial até que os RPCs do portal restrito sejam implementados e testados.
+
+
+## 12. Revisão estática após vínculo e proteção de transportadora
+
+Após adicionar a RPC de instalação, o bloco JavaScript principal passou novamente pela compilação estática com `new Function`. A migração contém definições únicas para `radar_validar_handoff`, `radar_vincular_instalacao`, `radar_autenticar_usuario`, `radar_carregar_dados`, `radar_salvar_dados` e `radar_encerrar_sessao`; os delimitadores PL/pgSQL estão balanceados. Isso é uma verificação estática preliminar, não análise sintática completa de PostgreSQL nem execução no Supabase.
+
+O módulo não deve ser mesclado até que a migração seja executada em QA, todos os RPCs sejam confirmados e os testes do checklist passem. Ainda estão pendentes gestão de usuários/permissões e portal de transportadora com dados filtrados no backend.
