@@ -11,10 +11,12 @@
 - [x] Fluxo de logout incluído; tenta sincronizar alterações pendentes antes de encerrar a sessão.
 - [x] SQL da persistência inclui RPCs de autenticação, leitura, gravação e encerramento de sessão.
 - [x] Geração de dados sintéticos condicionada exclusivamente ao tenant `YLG-RADAR-QA`, quando a base estiver vazia.
-- [x] O parâmetro `handoff` é removido da URL e a interface deixa explícito que a validação SSO ainda não está habilitada.
+- [x] SSO implementado na branch por RPC isolada `radar_validar_handoff`; token é removido da URL antes da chamada e a validação é feita no backend.
 - [ ] Migração SQL aplicada e validada no projeto Supabase real.
 - [ ] Tenant e usuário de QA provisionados com permissão para o módulo Radar.
-- [ ] RPC de validação/consumo do handoff identificada e confirmada no backend.
+- [x] Contrato da RPC genérica `validar_handoff_modulo` revisado; implementação isolada `radar_validar_handoff` adicionada à migração da branch.
+- [ ] Migração que cria `radar_validar_handoff` aplicada e validada no Supabase de QA.
+- [x] Restauração automática de sessão por `sessionStorage` adicionada ao boot para F5/Ctrl+R; sessão sempre revalidada no backend.
 - [ ] Testes em navegador concluídos.
 
 ## Roteiro funcional — executar somente no tenant isolado de QA
@@ -25,11 +27,11 @@
 4. **Leitura inicial:** o Radar carrega o payload compartilhado e a versão informada pelo servidor.
 5. **Gravação:** criar/editar um registro de teste, aguardar confirmação do servidor e atualizar a página; o registro permanece.
 6. **Concorrência:** duas sessões alteram dados; conflito de versão é informado sem sobrescrever silenciosamente a atualização mais recente.
-7. **Refresh:** F5 e Ctrl+R preservam a sessão válida e recarregam a base do servidor.
+7. **Refresh:** F5 e Ctrl+R devem revalidar o token de sessão, manter o acesso se estiver válido e recarregar a base do servidor; sessão expirada/revogada deve ser removida e exigir login.
 8. **Falha de rede:** indisponibilidade não é apresentada como gravação concluída; alterações pendentes não devem ser descartadas silenciosamente.
 9. **Logout:** alterações pendentes são sincronizadas antes do logout; a sessão remota é revogada quando o servidor responde; retorno à tela de login.
 10. **Sessão expirada/revogada:** operações de leitura/gravação são bloqueadas e o usuário precisa autenticar novamente.
-11. **SSO/handoff:** só aprovar após confirmar a RPC real de validação e consumo único do token. Até lá, validar que a interface informa a limitação e não simula login automático.
+11. **SSO/handoff:** aplicar primeiro a migração no ambiente isolado; testar token válido do Radar, token de outro módulo, token expirado, token reutilizado, sessão do Ecossistema revogada e usuário sem liberação. Confirmar consumo único e que falhas retornam à tela de login.
 12. **Responsividade:** testar desktop, tablet e celular; login, navegação, tabelas e botão Sair.
 13. **Dados de QA:** conferir identificação `[RADAR-TESTE-90D]`; confirmar que nenhum registro sintético foi criado em tenant real.
 
