@@ -150,3 +150,25 @@ Como `company_installations` e `module_sessions` são estruturas existentes e po
 5. Fazer primeiro backup/snapshot do esquema e dados necessários, aplicar em tenant de QA isolado, verificar login direto + SSO + refresh + isolamento; para rollback, desabilitar as RPCs novas e remover apenas a estrutura exclusiva criada pelo Radar, após exportar qualquer registro de QA necessário. Não apagar linhas de `company_installations` nem dados operacionais existentes.
 
 **Impacto:** adiciona identificador por instalação e vínculo de sessão no escopo do Radar; não deve migrar dados operacionais nem modificar as funções genéricas do Ecossistema. A implantação permanece bloqueada até a criação/validação de um tenant de QA com licença válida.
+
+
+## 10. Vínculo de instalação isolado implementado na branch
+
+Foram preparadas, sem executar no Supabase, as alterações abaixo:
+
+- Tabela exclusiva `public.radar_installation_sessions`, ligando token da sessão do módulo, empresa, UUID de instalação, data e estado de revogação. A tabela usa FKs para sessões, empresas e instalações existentes, tem RLS ativado e acesso direto revogado para `PUBLIC`, `anon` e `authenticated`.
+- RPC `public.radar_vincular_instalacao(p_module_session_token, p_installation_id)`: deriva empresa/usuário da sessão validada; exige licença válida e vínculo ativo de módulo; registra/verifica UUID em `company_installations`; recusa UUID associado a outra empresa; devolve o UUID já associado se a mesma sessão já possuir vínculo.
+- O frontend gera e guarda somente o UUID técnico de instalação, numa chave por empresa. Cargas e cadastros operacionais continuam exclusivamente no backend.
+- A inicialização autenticada estabelece/revalida sessão e depois chama a RPC de vínculo antes de carregar os dados.
+- As RPCs de leitura e gravação passam a exigir vínculo ativo de instalação. O logout revoga o vínculo da sessão do Radar além de revogar o token de módulo.
+
+### Impacto e recuperação
+
+O delta acrescenta uma tabela exclusiva e uma RPC; atualiza a migração e o frontend da branch. Não modifica `module_sessions`, `ecosystem_sessions`, a função genérica de autenticação, nem apaga/transforma cadastros operacionais. A nova tabela tem FK de exclusão em cascata com `module_sessions` e `empresas`, mas a limpeza deve ser feita apenas em QA quando necessário. Rollback de QA: exportar evidências, revogar/desativar o uso das RPCs do Radar e remover a tabela exclusiva após confirmar que não há sessões/QA a preservar; manter intactas as linhas preexistentes de `company_installations`.
+
+### Limitações antes do release
+
+- A migração ainda não foi aplicada nem validada por PostgreSQL no projeto Supabase.
+- Não existe tenant `YLG-RADAR-QA` no inventário retornado; é necessário provisionar ambiente e licença válida por procedimento aprovado.
+- A instalação agora será criada pelo Radar ao primeiro acesso e associada à empresa da sessão; não altera retroativamente as 13 instalações antigas da Allas.
+- O teste estático de JavaScript não equivale a E2E. Não há prova de acesso cruzado, refresh, replay SSO ou persistência até a execução dos testes em ambiente isolado.
