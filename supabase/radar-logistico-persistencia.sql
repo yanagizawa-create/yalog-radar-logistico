@@ -39,6 +39,7 @@ DECLARE
     v_perfil text;
     v_session_token text;
     v_used_count integer;
+    v_licenca_ok boolean;
 BEGIN
     IF NULLIF(trim(p_token), '') IS NULL THEN
         RAISE EXCEPTION 'HANDOFF_INVALIDO_OU_EXPIRADO'
@@ -74,6 +75,20 @@ BEGIN
 
     IF NOT FOUND THEN
         RAISE EXCEPTION 'SESSAO_ECOSYSTEM_INVALIDA_OU_EXPIRADA'
+            USING ERRCODE = '28000';
+    END IF;
+
+    SELECT EXISTS (
+        SELECT 1
+          FROM public.licencas l
+         WHERE l.company_id = v_access.company_id
+           AND upper(coalesce(l.status, '')) = 'ATIVA'
+           AND (l.validade IS NULL OR l.validade >= current_date)
+    )
+      INTO v_licenca_ok;
+
+    IF NOT COALESCE(v_licenca_ok, false) THEN
+        RAISE EXCEPTION 'LICENCA_RADAR_INVALIDA_OU_EXPIRADA'
             USING ERRCODE = '28000';
     END IF;
 
@@ -159,6 +174,7 @@ DECLARE
     v_user record;
     v_module_profile text;
     v_token text;
+    v_licenca_ok boolean;
 BEGIN
     IF NULLIF(trim(p_company_id), '') IS NULL
        OR NULLIF(trim(p_login), '') IS NULL
@@ -180,6 +196,23 @@ BEGIN
        OR v_user.senha_hash IS NULL
        OR v_user.senha_hash <> p_senha_hash THEN
         RETURN jsonb_build_object('ok', false, 'message', 'Credenciais inválidas ou empresa inativa.');
+    END IF;
+
+    -- Mesma regra de licença utilizada no login central do Ecossistema.
+    SELECT EXISTS (
+        SELECT 1
+          FROM public.licencas l
+         WHERE l.company_id = v_user.company_id
+           AND upper(coalesce(l.status, '')) = 'ATIVA'
+           AND (l.validade IS NULL OR l.validade >= current_date)
+    )
+      INTO v_licenca_ok;
+
+    IF NOT COALESCE(v_licenca_ok, false) THEN
+        RETURN jsonb_build_object(
+            'ok', false,
+            'message', 'Licença da empresa inválida ou inativa.'
+        );
     END IF;
 
     IF NOT public.usuario_autorizado_modulo(v_user.company_id, v_user.login, 'radarlogistico') THEN
