@@ -759,6 +759,26 @@ body:not(.radar-authenticated) .app{display:none!important}
       </div>
     </div>
   </div>
+  <div class="card" style="margin-top:15px" id="radarCarrierUserAdmin">
+    <div class="head"><div><div class="ct">Usuários das transportadoras</div><div class="dash-sub">Vincule cada login a uma transportadora cadastrada. A criação e o vínculo são validados no servidor.</div></div><button class="btn outline" onclick="radarRenderCarrierUsers()">Atualizar transportadoras</button></div>
+    <div class="notice" style="margin:10px 0">Versão de teste: o cadastro de vínculo é separado do cadastro de colaboradores internos. Não libere dados operacionais reais de transportadoras até concluir e validar o escopo de dados no backend.</div>
+    <div class="grid2" style="margin-top:10px">
+      <div class="card" style="background:var(--bg3)">
+        <div class="ct">Criar / atualizar usuário de transportadora</div>
+        <div class="filters" style="margin-top:10px">
+          <div class="fg"><label>Transportadora</label><select id="radarCarrierUserCarrier"><option value="">Carregando transportadoras…</option></select></div>
+          <div class="fg"><label>Login</label><input id="radarCarrierUserLogin" autocomplete="off" maxlength="100" placeholder="ex.: motorista.01"></div>
+          <div class="fg"><label>Nome completo</label><input id="radarCarrierUserName" autocomplete="off" maxlength="150" placeholder="Nome do colaborador"></div>
+          <div class="fg"><label>Senha inicial / nova senha</label><input id="radarCarrierUserPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Mínimo de 8 caracteres"></div>
+        </div>
+        <div class="actions"><button class="btn primary" onclick="radarManageCarrierUser('CRIAR')">Criar acesso</button><button class="btn outline" onclick="radarManageCarrierUser('ATUALIZAR')">Atualizar acesso</button><span id="radarCarrierUserStatus" class="dash-mini-note"></span></div>
+      </div>
+      <div class="card" style="background:var(--bg3)">
+        <div class="ct">Usuários vinculados</div>
+        <div class="table" style="margin-top:10px"><table><thead><tr><th>Transportadora</th><th>Login</th><th>Nome</th><th>Status</th><th>Ação</th></tr></thead><tbody id="radarCarrierUserRows"><tr><td colspan="5">Clique em “Atualizar transportadoras”.</td></tr></tbody></table></div>
+      </div>
+    </div>
+  </div>
   <div class="card" style="margin-top:15px"><div class="head"><div><div class="ct">Metas e Parâmetros de Gestão</div><div class="dash-sub">Controle simples do custo logístico e da regra de recomendação de custo-benefício.</div></div><span class="dash-tag">PARAMETRIZAÇÃO</span></div>
     <div class="grid2" style="margin-top:12px"><div class="card" style="background:var(--bg3)"><div class="ct">Meta de custo logístico</div><p style="color:var(--muted);line-height:1.55;margin:7px 0 12px">Meta de frete sobre o valor total da carga transportada. O dashboard compara o realizado com esta meta.</p><div class="filters" style="margin-bottom:0"><div class="fg"><label>Meta (%)</label><input id="metaFretePct" type="number" min="0" step="0.01"></div><div class="fg"><label>Tolerância (p.p.)</label><input id="metaFreteTol" type="number" min="0" step="0.01"></div></div></div>
     <div class="card" style="background:var(--bg3)"><div class="ct">Motor de custo-benefício</div><p style="color:var(--muted);line-height:1.55;margin:7px 0 12px">Ajuste os pesos usados para recomendar a proposta recebida. A soma deve ser 100%.</p><div class="filters" style="margin-bottom:0"><div class="fg"><label>Custo (%)</label><input id="cbPesoCusto" type="number" min="0" max="100" step="1"></div><div class="fg"><label>Prazo (%)</label><input id="cbPesoPrazo" type="number" min="0" max="100" step="1"></div><div class="fg"><label>SLA (%)</label><input id="cbPesoSla" type="number" min="0" max="100" step="1"></div><div class="fg"><label>Performance (%)</label><input id="cbPesoPerf" type="number" min="0" max="100" step="1"></div></div></div></div>
@@ -884,6 +904,65 @@ async function radarDeactivateUser(login){
     if(!result?.ok)throw new Error('O servidor não confirmou a inativação.');
     if(status)status.textContent='Usuário inativado.';
     await radarRenderUsers();
+  }catch(e){if(status)status.textContent=e.message||'Falha ao inativar usuário.';}
+}
+
+async function radarRenderCarrierUsers(){
+  const status=document.getElementById('radarCarrierUserStatus');
+  const rows=document.getElementById('radarCarrierUserRows');
+  const select=document.getElementById('radarCarrierUserCarrier');
+  try{
+    if(status)status.textContent='Carregando cadastros…';
+    const carriers=(D.transportadoras||[]).filter(t=>t.ativo!==false);
+    if(select)select.innerHTML='<option value="">Selecione a transportadora</option>'+carriers.map(t=>'<option value="'+esc(t.id)+'">'+esc(t.nome)+'</option>').join('');
+    const result=await radarRpc('radar_listar_usuarios_transportadora',{p_module_session_token:radarModuleSessionToken});
+    if(!result?.ok)throw new Error(result?.message||'Não foi possível carregar os vínculos.');
+    const users=Array.isArray(result.usuarios)?result.usuarios:[];
+    if(rows)rows.innerHTML=users.length?users.map(u=>'<tr><td>'+esc(u.transportadora_nome||u.transportadora_id)+'</td><td>'+esc(u.login)+'</td><td>'+esc(u.nome)+'</td><td>'+(u.ativo?'Ativo':'Inativo')+'</td><td>'+(u.ativo?'<button class="btn outline" data-radar-login="'+esc(u.login)+'" onclick="radarDeactivateCarrierUser(this.dataset.radarLogin)">Inativar</button>':'—')+'</td></tr>').join(''):'<tr><td colspan="5">Nenhum usuário de transportadora vinculado.</td></tr>';
+    if(status)status.textContent=users.length+' vínculo(s) carregado(s).';
+  }catch(e){
+    if(status)status.textContent=e.message||'Falha ao carregar vínculos.';
+    if(rows)rows.innerHTML='<tr><td colspan="5">RPC de gestão de transportadoras indisponível. Aplique a migração SQL do pacote V073 no Supabase.</td></tr>';
+  }
+}
+async function radarManageCarrierUser(action){
+  const status=document.getElementById('radarCarrierUserStatus');
+  const carrierId=document.getElementById('radarCarrierUserCarrier')?.value||'';
+  const login=document.getElementById('radarCarrierUserLogin')?.value.trim()||'';
+  const nome=document.getElementById('radarCarrierUserName')?.value.trim()||'';
+  const password=document.getElementById('radarCarrierUserPassword')?.value||'';
+  if(!carrierId||!login||!nome){toast('Selecione a transportadora e informe login e nome.');return;}
+  if(action==='CRIAR'&&!password){toast('Informe a senha inicial.');return;}
+  if(password.length>0&&password.length<8){toast('A senha deve ter pelo menos 8 caracteres.');return;}
+  try{
+    if(status)status.textContent='Validando e salvando no servidor…';
+    const hash=password?await radarHashPassword(password):null;
+    const result=await radarRpc('radar_gerenciar_usuario_transportadora',{
+      p_module_session_token:radarModuleSessionToken,p_action:action,
+      p_login:login,p_nome:nome,p_senha_hash:hash,p_transportadora_id:carrierId
+    });
+    if(!result?.ok)throw new Error(result?.message||'Operação não confirmada pelo servidor.');
+    const pw=document.getElementById('radarCarrierUserPassword');if(pw)pw.value='';
+    if(status)status.textContent='Alteração confirmada pelo servidor.';
+    toast(action==='CRIAR'?'Acesso da transportadora criado.':'Acesso da transportadora atualizado.');
+    await radarRenderCarrierUsers();
+  }catch(e){
+    if(status)status.textContent=e.message||'Falha ao salvar usuário.';
+    toast('Não foi possível salvar: '+(e.message||'erro no servidor'));
+  }
+}
+async function radarDeactivateCarrierUser(login){
+  if(!confirm('Inativar o acesso de transportadora '+login+'?'))return;
+  const status=document.getElementById('radarCarrierUserStatus');
+  try{
+    const result=await radarRpc('radar_gerenciar_usuario_transportadora',{
+      p_module_session_token:radarModuleSessionToken,p_action:'INATIVAR',
+      p_login:login,p_nome:null,p_senha_hash:null,
+      p_transportadora_id:document.getElementById('radarCarrierUserCarrier')?.value||''
+    });
+    if(!result?.ok)throw new Error(result?.message||'O servidor não confirmou a inativação.');
+    if(status)status.textContent='Usuário inativado.';
+    await radarRenderCarrierUsers();
   }catch(e){if(status)status.textContent=e.message||'Falha ao inativar usuário.';}
 }
 
