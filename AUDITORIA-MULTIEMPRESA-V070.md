@@ -236,3 +236,20 @@ Com base nas definições SQL recebidas:
 
 ### Decisão de implementação
 Construir gestão de usuários Radar em RPCs próprias e limitadas ao módulo `radarlogistico`, usando `usuarios` apenas para a identidade central e `module_users` para perfil/ativação Radar. Separar de forma explícita: criar identidade global (somente quando não existe), conceder acesso Radar, editar perfil Radar, revogar acesso Radar e bloquear identidade global. A UI não deve receber nem poder alterar `senha_hash` por consultas genéricas. As permissões granulares do Radar precisam de recursos próprios e verificações server-side; os níveis do Pátio não autorizam automaticamente ações de carga, cotação, aprovação ou liberação.
+
+
+## 16. Autorização Pátio e privilégios diretos da tabela (12/10/2026)
+
+O resultado SQL recebido trouxe estes achados:
+
+- `patio_verificar_acesso` valida sessão no módulo literal `patio`, normaliza o perfil, concede acesso irrestrito ao perfil normalizado `MASTER` e, para os demais perfis, resolve uma permissão por recurso com override na tabela `patio_permissoes` ou fallback em `_patio_permissao_padrao`. Portanto, essa função não autoriza Radar e não deve ser usada por suas RPCs.
+- `_patio_perfil_norm` converte perfis desconhecidos para `USUARIO`; esse fallback implícito não será copiado para o Radar, no qual perfis não reconhecidos devem ser recusados por padrão.
+- `_patio_permissao_padrao` contém uma matriz específica de recursos e funções do Pátio. Não representa permissões de carga, cotação, aprovação, liberação ou administração do Radar.
+- `patio_permissoes` tem níveis CHECK limitados a `SEM_ACESSO`, `VISUALIZAR`, `EXECUTAR` e UNIQUE por `(company_id, login, recurso)`.
+- Foram reportados privilégios diretos para a role `anon` em `patio_permissoes`, incluindo INSERT/SELECT/UPDATE/DELETE e **TRUNCATE**. TRUNCATE não é controlado por RLS. A consulta de políticas não retornou policies para essa tabela, mas não trouxe `relrowsecurity`/`relforcerowsecurity`, logo o estado de RLS precisa ser confirmado antes de concluir se leitura/alteração direta está efetivamente exposta. Esse ponto é risco crítico a investigar no banco compartilhado.
+- As funções de permissão atuais estão limitadas ao Pátio, o que é correto em termos de módulo; contudo, os grants de execução das RPCs e a definição de `_patio_nivel_atende` ainda não foram inspecionados.
+- Nenhuma permissão, política ou tabela foi alterada no banco. A branch Radar somente recebe documentação nesta fase; a correção de grants compartilhados requer uma análise de impacto e janela controlada.
+
+### Regra para o Radar
+
+Criar uma matriz de permissões própria para `radarlogistico`, com lista permitida de recursos e níveis/ações explícitos, recusando recurso ou perfil desconhecido. Cada RPC deverá verificar a sessão, o módulo Radar, a licença e a empresa, além da permissão da ação no servidor. Não usar a matriz, fallback de perfil ou helper de autorização do Pátio.
