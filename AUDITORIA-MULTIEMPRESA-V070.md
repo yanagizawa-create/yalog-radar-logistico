@@ -205,3 +205,18 @@ Consulta ao esquema do Supabase mostrou:
 2. Não fazer CRUD direto nessas tabelas a partir do frontend; criar RPCs com autorização server-side e escopo estrito por empresa.
 3. Antes de definir inserção/alteração, revisar chaves únicas e políticas RLS reais para `usuarios` e `module_users`.
 4. Para permissões configuráveis e portal de transportadoras, primeiro separar as operações protegidas do payload único ou criar RPCs dedicadas e tabelas relacionais específicas para os vínculos. Não liberar o perfil `TRANSPORTADORA` pelo atual modelo de payload integral.
+
+
+## 14. Constraints, RLS policies e funções de gestão existentes (11/10/2026)
+
+O resultado recebido confirma:
+
+- `usuarios(company_id, login)` tem `UNIQUE`; `module_users(company_id, modulo, login)` também tem `UNIQUE`. Assim, a identidade central e o vínculo por módulo podem ser reaproveitados sem nova tabela de usuários.
+- `module_users` tem RLS ativada e não apareceu nenhuma policy para ela na consulta, o que tende a negar acesso direto via PostgREST para roles comuns; as RPCs `SECURITY DEFINER` ainda precisam validar empresa, MASTER e permissões explicitamente.
+- `usuarios` tem policies para `anon` incluindo `ALL USING(true) WITH CHECK(true)`, além de policies específicas de SELECT/INSERT/UPDATE. `usuarios_operacionais` tem policies anon para SELECT/INSERT/UPDATE/DELETE com condições permissivas. Isso é um achado de alta prioridade: é necessário investigar grants efetivos e todos os consumidores antes de mudar essas policies, porque a correção pode afetar o Ecossistema e outros módulos. Esta branch do Radar não remove nem altera policies globais.
+- O resultado mostrou funções CRUD e permissões do Pátio (`patio_usuarios_listar/criar/editar`, `patio_permissoes_obter/definir`, alterações de senha). Ainda não foram inspecionadas as definições dessas funções; não se presume que sirvam para o Radar sem validar verificações de token, papel MASTER, empresa, hash/senha, limites e auditoria.
+- O agrupamento de perfis `module_users` para `radarlogistico` não retornou linhas. Isso indica que ainda não foi confirmado nenhum usuário vinculado a esse módulo no esquema consultado; autenticação V070 exige esse vínculo. Antes de testes, provisionar um usuário de QA autorizado pelo procedimento central, sem modificar usuários operacionais de produção.
+
+### Próxima etapa controlada
+
+Inspecionar as definições completas das funções CRUD/permissões do Pátio, o mapeamento atual de funções de senha e o volume de vínculos por módulo. A partir disso, decidir se há helper seguro reaproveitável ou se o Radar precisa de RPCs próprias. Não revogar policies globais automaticamente nesta sprint.
