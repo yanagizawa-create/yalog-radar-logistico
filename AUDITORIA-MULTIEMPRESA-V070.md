@@ -116,3 +116,18 @@ A definição fornecida de `autenticar_ecosystem` grava `installation_id = NULL`
 - Licença ATIVA e válida: login direto, SSO, leitura e gravação permitidos.
 - Licença SUSPENSA/EXPIRADA ou validade anterior à data atual: login, SSO, leitura e gravação recusados.
 - Sessão SSO criada com `installation_id` nulo: comportamento explicitamente decidido, sem fingir vínculo por instalação.
+
+
+## 8. Resultado do inventário de instalações e licenças (11/10/2026)
+
+Consulta agregada retornada do Supabase:
+
+- `YALOG-CORE`: licença `SUSPENSA`; nenhuma instalação ou sessão ativa.
+- `YLG-AFD2BC` (Allas Soluções Logísticas): licença `ATIVA` sem data de validade; 13 instalações; zero sessões ativas no momento da consulta.
+- `YLG-FF05B3` (Allas Balsas): licença `ATIVA` com validade `2026-10-10`, portanto expirada em `2026-10-11` pela regra do Ecossistema; nenhuma instalação ou sessão ativa.
+- Nenhuma das linhas retornadas mostra sessões ativas, então não há uma sessão em execução que permita validar o percurso real do SSO neste instantâneo.
+- Não foi identificado tenant `YLG-RADAR-QA` no resultado anterior de licenças/empresas. Os dados sintéticos de teste não devem ser criados em uma empresa operacional real.
+
+### Interpretação cautelosa
+
+As 13 instalações de Allas provam que existem registros em `company_installations`, mas a consulta não prova que alguma sessão ativa esteja vinculada a uma dessas instalações. A função `autenticar_ecosystem` fornecida insere `installation_id = NULL`; antes de definir um bloqueio estrito no SSO, deve-se confirmar se existe algum trigger no banco que preencha essa coluna ou outro fluxo de instalação em uso. Nenhum tenant nem licença foi alterado.
