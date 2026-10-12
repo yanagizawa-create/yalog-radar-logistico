@@ -277,3 +277,12 @@ A consulta adicional por duplicidades normalizadas envolvendo SUPER_ADMIN/GESTOR
 5. Depois de regressão, corrigir as policies permissivas e grants públicos em uma migração compartilhada dedicada.
 
 Os dois hotfixes de logs estão em PRs draft separados. Nenhuma alteração de banco ou publicação foi realizada.
+
+
+## 19. Interpretação dos logins repetidos — confirmação do responsável (12/10/2026)
+
+O responsável esclareceu que há logins repetidos entre empresas porque executa testes de vários módulos com usuários distintos. Portanto, esses registros são intencionais no contexto informado e não devem ser tratados como duplicidades a limpar. Não renomear, apagar, desativar nem mesclar usuários apenas porque compartilham o login.
+
+A necessidade arquitetural permanece: autenticação e resolução de tenant devem ser explícitas e server-side, sem depender da ordem de retorno ou de uma busca global por login. Essa correção deve preservar contas válidas de diferentes empresas e não deve bloquear a continuidade dos testes do Radar por uma operação de saneamento alheia ao módulo.
+
+Prioridade imediata do V070 volta a ser QA dedicado do Radar: validar/obter empresa e licença de teste ativas, provisionar vínculo de acesso ao módulo, criar perfil MASTER e usuários da embarcadora, depois implementar vínculo transportadora-cargas e endpoints filtrados no backend. O bloqueio atual do perfil de transportadora deve permanecer até os endpoints filtrados passarem os testes de isolamento. Nenhum dado do usuário foi alterado.
