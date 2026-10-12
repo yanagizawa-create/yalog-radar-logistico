@@ -253,3 +253,27 @@ O resultado SQL recebido trouxe estes achados:
 ### Regra para o Radar
 
 Criar uma matriz de permissões própria para `radarlogistico`, com lista permitida de recursos e níveis/ações explícitos, recusando recurso ou perfil desconhecido. Cada RPC deverá verificar a sessão, o módulo Radar, a licença e a empresa, além da permissão da ação no servidor. Não usar a matriz, fallback de perfil ou helper de autorização do Pátio.
+
+
+## 17. Identidades com login repetido entre empresas (12/10/2026)
+
+A consulta executada no Supabase encontrou estes registros; nenhum hash ou senha foi consultado:
+
+- login normalizado andre: YLG-AFD2BC / role USUARIO / ativo; YLG-FF05B3 / role MASTER / ativo.
+- login normalizado kemps: YLG-AFD2BC / role MASTER / ativo; YLG-FF05B3 / role MASTER / ativo.
+
+A repetição de login entre empresas não é, isoladamente, corrupção: a unicidade atual é por company_id e login, logo contas com o mesmo login podem existir em tenants distintos. O risco confirmado é a Plataforma procurar o usuário apenas pelo login em DB.usuarios(), sem contexto de empresa; a consulta retorna registros ordenados por created_at descendente e o código seleciona a primeira correspondência. Isso pode carregar a conta mais recente e selecionar o company_id errado. Também não se deve considerar o login globalmente único no helper registrar_identidade_plataforma, que usa lower(login) com LIMIT 1.
+
+Não renomear, apagar, desativar nem mesclar esses registros automaticamente. A correção deve mudar a resolução de identidade e exigir contexto explícito de empresa para usuários cliente, ou restringir o login administrativo a papéis/escopo administrativo no servidor. A resposta de autenticação não pode retornar senha_hash.
+
+A consulta adicional por duplicidades normalizadas envolvendo SUPER_ADMIN/GESTOR não encontrou linhas; a consulta abrangente encontrou as duas colisões acima. Este resultado reduz uma classe de ambiguidade interna, mas não elimina a ambiguidade geral de login. Nenhuma conta ou permissão foi alterada.
+
+## 18. Próxima sequência de correção
+
+1. Migrar a autenticação da Plataforma para uma RPC server-side que valide credencial, papel, status e escopo de empresa e devolva somente os campos mínimos da identidade.
+2. Separar sessão administrativa da equipe YALog e acesso de usuários cliente ao ecossistema; não resolver ambos por uma busca global em usuarios.
+3. Migrar restauração de sessão, recuperação do Super Admin e CRUD/reset de usuários para funções autorizadas e auditadas.
+4. Migrar WMS e ContaLog dos SELECTs de credenciais para RPCs autenticadoras antes de restringir SELECT em usuarios e usuarios_operacionais.
+5. Depois de regressão, corrigir as policies permissivas e grants públicos em uma migração compartilhada dedicada.
+
+Os dois hotfixes de logs estão em PRs draft separados. Nenhuma alteração de banco ou publicação foi realizada.
