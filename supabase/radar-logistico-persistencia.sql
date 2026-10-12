@@ -749,10 +749,6 @@ BEGIN
             RAISE EXCEPTION 'Usuário não encontrado no Radar.'
                 USING ERRCODE = 'P0002';
         END IF;
-        UPDATE public.usuarios
-           SET ativo = false
-         WHERE company_id = v_sess.company_id
-           AND lower(login) = v_target_login;
         RETURN jsonb_build_object('ok', true, 'action', 'INATIVAR', 'login', v_target_login);
     END IF;
 
@@ -811,7 +807,6 @@ GRANT EXECUTE ON FUNCTION public.radar_salvar_dados(text, bigint, jsonb) TO anon
         END IF;
         UPDATE public.usuarios
            SET nome = trim(p_nome),
-               ativo = true,
                senha_hash = CASE WHEN NULLIF(p_senha_hash, '') IS NULL THEN senha_hash ELSE p_senha_hash END
          WHERE company_id = v_sess.company_id
            AND lower(login) = v_target_login;
@@ -826,6 +821,10 @@ GRANT EXECUTE ON FUNCTION public.radar_salvar_dados(text, bigint, jsonb) TO anon
 END;
 $function$;
 
+REVOKE ALL ON FUNCTION public.radar_listar_usuarios(text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.radar_gerenciar_usuario(text, text, text, text, text, text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.radar_listar_usuarios(text) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.radar_gerenciar_usuario(text, text, text, text, text, text) TO anon, authenticated;
 REVOKE ALL ON FUNCTION public.radar_vincular_instalacao(text, uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.radar_vincular_instalacao(text, uuid) TO anon, authenticated;
 REVOKE ALL ON FUNCTION public.radar_validar_handoff(text) FROM PUBLIC;
