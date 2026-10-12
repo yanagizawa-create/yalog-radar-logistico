@@ -2649,6 +2649,8 @@ async function radarBootAuthenticated(){
     window.addEventListener('beforeunload',()=>{if(radarDirty)console.warn('[RADAR] existem alterações aguardando sincronização.');});
   }catch(e){
     console.error('[RADAR] bloqueio de inicialização:',e);
+    sessionStorage.removeItem(RADAR_SESSION_KEY);
+    radarModuleSessionToken=null;
     radarGate('Acesso não liberado',e.message||'Não foi possível validar sua sessão.','Acesso bloqueado · nenhuma base operacional foi carregada.',true,true);
   }
 }
