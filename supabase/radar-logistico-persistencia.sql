@@ -17,6 +17,146 @@ CREATE TABLE IF NOT EXISTS public.radar_logistico_store (
 ALTER TABLE public.radar_logistico_store ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON TABLE public.radar_logistico_store FROM PUBLIC, anon, authenticated;
 
+-- V070-installation: vínculo exclusivamente do Radar entre sessão e instalação.
+-- Não altera o contrato genérico de public.module_sessions.
+CREATE TABLE IF NOT EXISTS public.radar_installation_sessions (
+    module_session_token text PRIMARY KEY
+        REFERENCES public.module_sessions(token) ON DELETE CASCADE,
+    company_id text NOT NULL
+        REFERENCES public.empresas(company_id) ON DELETE CASCADE,
+    installation_id uuid NOT NULL
+        REFERENCES public.company_installations(installation_id) ON DELETE RESTRICT,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    revoked_at timestamptz
+);
+ALTER TABLE public.radar_installation_sessions ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE public.radar_installation_sessions FROM PUBLIC, anon, authenticated;
+
+-- Registra/confirma uma instalação para uma sessão autenticada do Radar.
+-- UUID é identificador técnico, não credencial; empresa vem da sessão validada.
+CREATE OR REPLACE FUNCTION public.radar_vincular_instalacao(
+    p_module_session_token text,
+    p_installation_id uuid
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
+DECLARE
+    v_sess record;
+    v_install_company text;
+    v_existing public.radar_installation_sessions%ROWTYPE;
+    v_licenca_ok boolean;
+BEGIN
+    IF p_installation_id IS NULL THEN
+        RAISE EXCEPTION 'IDENTIFICADOR_DE_INSTALACAO_OBRIGATORIO'
+            USING ERRCODE = '22023';
+    END IF;
+
+    SELECT *
+      INTO v_sess
+      FROM public.validar_sessao_modulo(
+          p_token := p_module_session_token,
+          p_modulo := 'radarlogistico'
+      )
+     LIMIT 1;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Sessão do Radar inválida, expirada ou sem autorização'
+            USING ERRCODE = '28000';
+    END IF;
+
+    SELECT EXISTS (
+        SELECT 1 FROM public.licencas l
+         WHERE l.company_id = v_sess.company_id
+           AND upper(coalesce(l.status, '')) = 'ATIVA'
+           AND (l.validade IS NULL OR l.validade >= current_date)
+    ) INTO v_licenca_ok;
+
+    IF NOT COALESCE(v_licenca_ok, false) THEN
+        RAISE EXCEPTION 'Licença do Radar inválida, suspensa ou expirada.'
+            USING ERRCODE = '28000';
+    END IF;
+
+    IF NOT public.usuario_autorizado_modulo(
+        v_sess.company_id, v_sess.login, 'radarlogistico'
+    ) THEN
+        RAISE EXCEPTION 'RADAR_NAO_AUTORIZADO_PARA_USUARIO'
+            USING ERRCODE = '28000';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM public.module_users mu
+         WHERE mu.company_id = v_sess.company_id
+           AND lower(mu.login) = lower(v_sess.login)
+           AND mu.modulo = 'radarlogistico'
+           AND mu.ativo = true
+    ) THEN
+        RAISE EXCEPTION 'USUARIO_SEM_PERFIL_ATIVO_NO_RADAR'
+            USING ERRCODE = '28000';
+    END IF;
+
+    -- Se esta mesma sessão já tem vínculo, o servidor é a fonte de verdade.
+    SELECT *
+      INTO v_existing
+      FROM public.radar_installation_sessions ris
+     WHERE ris.module_session_token = p_module_session_token
+     FOR UPDATE;
+
+    IF FOUND AND v_existing.revoked_at IS NULL THEN
+        IF v_existing.company_id <> v_sess.company_id THEN
+            RAISE EXCEPTION 'VINCULO_DE_INSTALACAO_INCONSISTENTE'
+                USING ERRCODE = '28000';
+        END IF;
+        RETURN jsonb_build_object(
+            'ok', true,
+            'company_id', v_existing.company_id,
+            'installation_id', v_existing.installation_id
+        );
+    END IF;
+
+    -- Registra o UUID na tabela existente sem permitir mover um ID entre empresas.
+    INSERT INTO public.company_installations (
+        installation_id, company_id, created_at, updated_at
+    )
+    VALUES (
+        p_installation_id, v_sess.company_id, now(), now()
+    )
+    ON CONFLICT (installation_id) DO NOTHING;
+
+    SELECT ci.company_id
+      INTO v_install_company
+      FROM public.company_installations ci
+     WHERE ci.installation_id = p_installation_id
+     LIMIT 1;
+
+    IF v_install_company IS NULL OR v_install_company <> v_sess.company_id THEN
+        RAISE EXCEPTION 'INSTALACAO_VINCULADA_A_OUTRA_EMPRESA'
+            USING ERRCODE = '28000';
+    END IF;
+
+    INSERT INTO public.radar_installation_sessions (
+        module_session_token, company_id, installation_id, created_at, revoked_at
+    )
+    VALUES (
+        p_module_session_token, v_sess.company_id, p_installation_id, now(), NULL
+    )
+    ON CONFLICT (module_session_token)
+    DO UPDATE SET
+        company_id = EXCLUDED.company_id,
+        installation_id = EXCLUDED.installation_id,
+        created_at = now(),
+        revoked_at = NULL;
+
+    RETURN jsonb_build_object(
+        'ok', true,
+        'company_id', v_sess.company_id,
+        'installation_id', p_installation_id
+    );
+END;
+$function$;
+
 -- RPC isolada do Radar: valida e consome handoff de uso único sem alterar
 -- o contrato genérico usado por outros módulos do Ecossistema.
 CREATE OR REPLACE FUNCTION public.radar_validar_handoff(p_token text)
@@ -288,6 +428,17 @@ BEGIN
             USING ERRCODE = '28000';
     END IF;
 
+    IF NOT EXISTS (
+        SELECT 1
+          FROM public.radar_installation_sessions ris
+         WHERE ris.module_session_token = p_module_session_token
+           AND ris.company_id = v_sess.company_id
+           AND ris.revoked_at IS NULL
+    ) THEN
+        RAISE EXCEPTION 'Sessão sem vínculo ativo de instalação do Radar.'
+            USING ERRCODE = '28000';
+    END IF;
+
     SELECT s.payload, s.version
       INTO v_payload, v_version
       FROM public.radar_logistico_store s
@@ -355,6 +506,17 @@ BEGIN
 
     IF NOT COALESCE(v_licenca_ok, false) THEN
         RAISE EXCEPTION 'Licença do Radar inválida, suspensa ou expirada.'
+            USING ERRCODE = '28000';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+          FROM public.radar_installation_sessions ris
+         WHERE ris.module_session_token = p_module_session_token
+           AND ris.company_id = v_sess.company_id
+           AND ris.revoked_at IS NULL
+    ) THEN
+        RAISE EXCEPTION 'Sessão sem vínculo ativo de instalação do Radar.'
             USING ERRCODE = '28000';
     END IF;
 
@@ -426,6 +588,11 @@ BEGIN
         RETURN jsonb_build_object('ok', true);
     END IF;
 
+    UPDATE public.radar_installation_sessions
+       SET revoked_at = now()
+     WHERE module_session_token = p_module_session_token
+       AND revoked_at IS NULL;
+
     UPDATE public.module_sessions
        SET revoked_at = now()
      WHERE token = p_module_session_token
@@ -437,6 +604,8 @@ BEGIN
 END;
 $function$;
 
+REVOKE ALL ON FUNCTION public.radar_vincular_instalacao(text, uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.radar_vincular_instalacao(text, uuid) TO anon, authenticated;
 REVOKE ALL ON FUNCTION public.radar_validar_handoff(text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.radar_validar_handoff(text) TO anon, authenticated;
 REVOKE ALL ON FUNCTION public.radar_autenticar_usuario(text, text, text) FROM PUBLIC;
