@@ -50,3 +50,14 @@ O teste estático de sintaxe não prova que as RPCs existem ou que a migração 
 
 
 **Instalação:** o contrato atual de `autenticar_ecosystem` insere `installation_id = NULL`. O vínculo da sessão com uma instalação específica precisa ser resolvido e testado antes de aprovar o requisito comercial de instalação individual.
+
+
+## Identidade de instalação (branch V070; requer migração aplicada em QA)
+
+14. Primeiro acesso: o Radar gera um UUID técnico por empresa no navegador e registra no servidor por `radar_vincular_instalacao`.
+15. Repetição na mesma sessão: o servidor devolve o ID de instalação já associado, mesmo que a chave local tenha sido removida e recriada.
+16. Tentativa de reutilizar UUID registrado por outra empresa: a RPC deve recusar sem associar a sessão.
+17. Leitura e gravação sem linha ativa em `radar_installation_sessions`: devem falhar no backend.
+18. Logout: o vínculo Radar da sessão fica revogado; as demais instalações da empresa permanecem intocadas.
+
+**Nota:** os cenários acima são casos de teste a executar; não estão marcados como aprovados.
