@@ -846,7 +846,7 @@ async function radarRenderUsers(){
     const result=await radarRpc('radar_listar_usuarios',{p_module_session_token:radarModuleSessionToken});
     if(!result?.ok)throw new Error('Não foi possível carregar os usuários.');
     const users=Array.isArray(result.usuarios)?result.usuarios:[];
-    if(rows)rows.innerHTML=users.length?users.map(u=>'<tr><td>'+esc(u.login)+'</td><td>'+esc(u.nome)+'</td><td>'+esc(u.perfil)+'</td><td>'+(u.ativo?'Ativo':'Inativo')+'</td><td>'+(u.ativo?'<button class="btn outline" onclick="radarDeactivateUser(\''+String(u.login).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">Inativar</button>':'—')+'</td></tr>').join(''):'<tr><td colspan="5">Nenhum usuário do Radar cadastrado.</td></tr>';
+    if(rows)rows.innerHTML=users.length?users.map(u=>'<tr><td>'+esc(u.login)+'</td><td>'+esc(u.nome)+'</td><td>'+esc(u.perfil)+'</td><td>'+(u.ativo?'Ativo':'Inativo')+'</td><td>'+(u.ativo?'<button class="btn outline" data-radar-login="'+esc(u.login)+'" onclick="radarDeactivateUser(this.dataset.radarLogin)">Inativar</button>':'—')+'</td></tr>').join(''):'<tr><td colspan="5">Nenhum usuário do Radar cadastrado.</td></tr>';
     if(status)status.textContent=users.length+' usuário(s) carregado(s).';
   }catch(e){if(status)status.textContent=e.message||'Acesso negado.';if(rows)rows.innerHTML='<tr><td colspan="5">Não foi possível listar. Confirme o perfil administrador e a migração SQL.</td></tr>';}
 }
