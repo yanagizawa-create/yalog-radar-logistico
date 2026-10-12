@@ -635,6 +635,197 @@ BEGIN
 END;
 $function$;
 
+
+-- Gestão de usuários internos do Radar. Escopo sempre limitado à empresa da sessão.
+-- Por segurança, esta RPC não permite criar MASTER nem perfis de transportadora.
+CREATE OR REPLACE FUNCTION public.radar_listar_usuarios(p_module_session_token text)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
+DECLARE
+    v_sess record;
+    v_profile text;
+    v_users jsonb;
+BEGIN
+    SELECT * INTO v_sess
+      FROM public.validar_sessao_modulo(p_token := p_module_session_token,
+                                        p_modulo := 'radarlogistico')
+     LIMIT 1;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Sessão inválida ou sem autorização para o Radar.'
+            USING ERRCODE = '28000';
+    END IF;
+
+    SELECT upper(trim(mu.perfil)) INTO v_profile
+      FROM public.module_users mu
+     WHERE mu.company_id = v_sess.company_id
+       AND lower(mu.login) = lower(v_sess.login)
+       AND mu.modulo = 'radarlogistico'
+       AND mu.ativo = true
+     LIMIT 1;
+
+    IF COALESCE(v_profile, '') NOT IN ('MASTER','ADMIN','ADMINISTRADOR','MASTER_EMBARCADORA') THEN
+        RAISE EXCEPTION 'Somente o administrador autorizado da empresa pode gerenciar usuários.'
+            USING ERRCODE = '42501';
+    END IF;
+
+    SELECT COALESCE(jsonb_agg(jsonb_build_object(
+        'login', mu.login,
+        'nome', COALESCE(u.nome, mu.login),
+        'perfil', mu.perfil,
+        'ativo', (mu.ativo AND COALESCE(u.ativo, false))
+    ) ORDER BY lower(mu.login)), '[]'::jsonb)
+      INTO v_users
+      FROM public.module_users mu
+      LEFT JOIN public.usuarios u
+        ON u.company_id = mu.company_id AND lower(u.login) = lower(mu.login)
+     WHERE mu.company_id = v_sess.company_id
+       AND mu.modulo = 'radarlogistico';
+
+    RETURN jsonb_build_object('ok', true, 'company_id', v_sess.company_id, 'usuarios', v_users);
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.radar_gerenciar_usuario(
+    p_module_session_token text,
+    p_action text,
+    p_login text,
+    p_nome text DEFAULT NULL,
+    p_perfil text DEFAULT 'USUARIO',
+    p_senha_hash text DEFAULT NULL
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
+DECLARE
+    v_sess record;
+    v_profile text;
+    v_target_login text := lower(trim(COALESCE(p_login, '')));
+    v_target_profile text := upper(trim(COALESCE(p_perfil, 'USUARIO')));
+    v_action text := upper(trim(COALESCE(p_action, '')));
+BEGIN
+    SELECT * INTO v_sess
+      FROM public.validar_sessao_modulo(p_token := p_module_session_token,
+                                        p_modulo := 'radarlogistico')
+     LIMIT 1;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Sessão inválida ou sem autorização para o Radar.'
+            USING ERRCODE = '28000';
+    END IF;
+
+    SELECT upper(trim(mu.perfil)) INTO v_profile
+      FROM public.module_users mu
+     WHERE mu.company_id = v_sess.company_id
+       AND lower(mu.login) = lower(v_sess.login)
+       AND mu.modulo = 'radarlogistico'
+       AND mu.ativo = true
+     LIMIT 1;
+
+    IF COALESCE(v_profile, '') NOT IN ('MASTER','ADMIN','ADMINISTRADOR','MASTER_EMBARCADORA') THEN
+        RAISE EXCEPTION 'Somente o administrador autorizado da empresa pode gerenciar usuários.'
+            USING ERRCODE = '42501';
+    END IF;
+
+    IF v_target_login = '' OR length(v_target_login) > 100 THEN
+        RAISE EXCEPTION 'Informe um login válido.'
+            USING ERRCODE = '22023';
+    END IF;
+    IF v_target_login = lower(v_sess.login) AND v_action IN ('INATIVAR','DESATIVAR','EXCLUIR') THEN
+        RAISE EXCEPTION 'Não é permitido desativar o próprio usuário nesta tela.'
+            USING ERRCODE = '22023';
+    END IF;
+
+    IF v_action IN ('INATIVAR','DESATIVAR') THEN
+        UPDATE public.module_users
+           SET ativo = false
+         WHERE company_id = v_sess.company_id
+           AND lower(login) = v_target_login
+           AND modulo = 'radarlogistico';
+        IF NOT FOUND THEN
+            RAISE EXCEPTION 'Usuário não encontrado no Radar.'
+                USING ERRCODE = 'P0002';
+        END IF;
+        UPDATE public.usuarios
+           SET ativo = false
+         WHERE company_id = v_sess.company_id
+           AND lower(login) = v_target_login;
+        RETURN jsonb_build_object('ok', true, 'action', 'INATIVAR', 'login', v_target_login);
+    END IF;
+
+    IF v_action NOT IN ('CRIAR','ATUALIZAR') THEN
+        RAISE EXCEPTION 'Ação inválida. Use CRIAR, ATUALIZAR ou INATIVAR.'
+            USING ERRCODE = '22023';
+    END IF;
+    IF v_target_profile NOT IN ('USUARIO','LIDERANCA','OPERADOR') THEN
+        RAISE EXCEPTION 'Perfil não permitido para criação nesta versão.'
+            USING ERRCODE = '42501';
+    END IF;
+    IF NULLIF(trim(COALESCE(p_nome, '')), '') IS NULL THEN
+        RAISE EXCEPTION 'Informe o nome do usuário.'
+            USING ERRCODE = '22023';
+    END IF;
+    IF v_action = 'CRIAR' AND NULLIF(p_senha_hash, '') IS NULL THEN
+        RAISE EXCEPTION 'A senha inicial é obrigatória para criar um usuário.'
+            USING ERRCODE = '22023';
+    END IF;
+    IF p_senha_hash IS NOT NULL AND p_senha_hash !~ '^[0-9a-f]{64}
+GRANT EXECUTE ON FUNCTION public.radar_vincular_instalacao(text, uuid) TO anon, authenticated;
+REVOKE ALL ON FUNCTION public.radar_validar_handoff(text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.radar_validar_handoff(text) TO anon, authenticated;
+REVOKE ALL ON FUNCTION public.radar_autenticar_usuario(text, text, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.radar_carregar_dados(text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.radar_salvar_dados(text, bigint, jsonb) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.radar_autenticar_usuario(text, text, text) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.radar_encerrar_sessao(text) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.radar_carregar_dados(text) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.radar_salvar_dados(text, bigint, jsonb) TO anon, authenticated;
+ THEN
+        RAISE EXCEPTION 'Formato de senha inválido.'
+            USING ERRCODE = '22023';
+    END IF;
+
+    IF v_action = 'CRIAR' THEN
+        IF EXISTS (SELECT 1 FROM public.usuarios u
+                    WHERE u.company_id = v_sess.company_id
+                      AND lower(u.login) = v_target_login) THEN
+            RAISE EXCEPTION 'Este login já existe nesta empresa.'
+                USING ERRCODE = '23505';
+        END IF;
+        INSERT INTO public.usuarios(company_id, login, nome, senha_hash, ativo)
+        VALUES (v_sess.company_id, v_target_login, trim(p_nome), p_senha_hash, true);
+        INSERT INTO public.module_users(company_id, login, modulo, perfil, ativo)
+        VALUES (v_sess.company_id, v_target_login, 'radarlogistico', v_target_profile, true);
+    ELSE
+        UPDATE public.module_users
+           SET perfil = v_target_profile, ativo = true
+         WHERE company_id = v_sess.company_id
+           AND lower(login) = v_target_login
+           AND modulo = 'radarlogistico';
+        IF NOT FOUND THEN
+            RAISE EXCEPTION 'Usuário não encontrado no Radar.'
+                USING ERRCODE = 'P0002';
+        END IF;
+        UPDATE public.usuarios
+           SET nome = trim(p_nome),
+               ativo = true,
+               senha_hash = CASE WHEN NULLIF(p_senha_hash, '') IS NULL THEN senha_hash ELSE p_senha_hash END
+         WHERE company_id = v_sess.company_id
+           AND lower(login) = v_target_login;
+        IF NOT FOUND THEN
+            RAISE EXCEPTION 'Cadastro base do usuário não encontrado.'
+                USING ERRCODE = 'P0002';
+        END IF;
+    END IF;
+
+    RETURN jsonb_build_object('ok', true, 'action', v_action, 'login', v_target_login,
+                              'perfil', v_target_profile);
+END;
+$function$;
+
 REVOKE ALL ON FUNCTION public.radar_vincular_instalacao(text, uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.radar_vincular_instalacao(text, uuid) TO anon, authenticated;
 REVOKE ALL ON FUNCTION public.radar_validar_handoff(text) FROM PUBLIC;
