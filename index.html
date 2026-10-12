@@ -2797,6 +2797,9 @@ async function radarBootAuthenticated(){
   try{
     await radarEstablishSession();
     await radarEnsureInstallationBinding();
+    if(/TRANSPORTADORA|CARRIER/i.test(radarProfile)){
+      throw new Error('Login de transportadora validado, mas o portal operacional está bloqueado até a ativação do escopo de dados no backend. Nenhum dado operacional foi carregado. Não remova este bloqueio antes de validar o isolamento por transportadora.');
+    }
     radarGate('Carregando dados da empresa','Sessão e instalação confirmadas. Buscando a base compartilhada do Radar.','Empresa: '+radarCompanyId+' · Usuário: '+radarLogin);
     const hasSharedData=await radarLoadSharedData();
     if(!hasSharedData && radarCompanyId==='YLG-RADAR-QA'){
