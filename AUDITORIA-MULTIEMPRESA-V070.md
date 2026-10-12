@@ -93,3 +93,26 @@ A consulta de `information_schema.columns` retornou as estruturas abaixo:
 ### Próxima inspeção de leitura
 
 Obter as definições de `autenticar_ecosystem`, `revalidar_sessao_ecosystem` e `obter_modulos_ecosystem`, junto com a distribuição dos valores de `licencas.status`. Isso permitirá reaproveitar o contrato existente sem duplicar regras.
+
+
+## 7. Aplicação da regra oficial de licença na branch (11/10/2026)
+
+A migração da branch foi atualizada para aplicar a mesma regra documentada nas funções oficiais `autenticar_ecosystem` e `revalidar_sessao_ecosystem` em quatro operações do Radar:
+
+- Login direto: só emite sessão se existir licença da empresa com `status = 'ATIVA'` e `validade IS NULL OR validade >= current_date`.
+- SSO: além da sessão Ecosystem ativa, do módulo correto, do usuário autorizado e do perfil ativo, verifica a licença com a mesma condição.
+- Leitura e gravação operacional: repetem a verificação de licença em cada chamada, para que expiração/suspensão bloqueie operações mesmo se o usuário já tiver uma sessão do módulo.
+
+### Bloqueio real detectado nos dados retornados
+
+A consulta ao banco reportou 2 licenças com status `ATIVA`, mas a validade mínima e máxima para esse status é `2026-10-10`. Considerando a data atual `2026-10-11`, essas licenças já não satisfazem a condição existente `validade >= current_date`. Antes de testar login comercial após aplicação da migração no ambiente de QA, verificar/renovar a licença do tenant de QA com o responsável pelo negócio. **Não alterar as licenças via migração de código e não aplicar este SQL diretamente em produção.**
+
+### Instalações: lacuna ainda aberta
+
+A definição fornecida de `autenticar_ecosystem` grava `installation_id = NULL` ao criar a sessão. Por isso não está comprovado o vínculo da sessão SSO a uma instalação específica, mesmo existindo `company_installations`. A branch ainda não modifica o fluxo genérico de login do Ecossistema. É necessário diagnosticar as instalações e sessões reais e definir a integração apropriada antes de declarar atendido o requisito de instalação exclusiva.
+
+### QA adicional requerido
+
+- Licença ATIVA e válida: login direto, SSO, leitura e gravação permitidos.
+- Licença SUSPENSA/EXPIRADA ou validade anterior à data atual: login, SSO, leitura e gravação recusados.
+- Sessão SSO criada com `installation_id` nulo: comportamento explicitamente decidido, sem fingir vínculo por instalação.
