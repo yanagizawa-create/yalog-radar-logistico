@@ -105,7 +105,13 @@ BEGIN
      FOR UPDATE;
 
     IF FOUND AND v_existing.revoked_at IS NULL THEN
-        IF v_existing.company_id <> v_sess.company_id THEN
+        IF v_existing.company_id <> v_sess.company_id
+           OR NOT EXISTS (
+               SELECT 1
+                 FROM public.company_installations ci
+                WHERE ci.installation_id = v_existing.installation_id
+                  AND ci.company_id = v_sess.company_id
+           ) THEN
             RAISE EXCEPTION 'VINCULO_DE_INSTALACAO_INCONSISTENTE'
                 USING ERRCODE = '28000';
         END IF;
