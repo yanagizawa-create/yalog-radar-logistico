@@ -186,3 +186,22 @@ Esse é um bloqueio preventivo, não a entrega do portal de transportadora. A in
 Após adicionar a RPC de instalação, o bloco JavaScript principal passou novamente pela compilação estática com `new Function`. A migração contém definições únicas para `radar_validar_handoff`, `radar_vincular_instalacao`, `radar_autenticar_usuario`, `radar_carregar_dados`, `radar_salvar_dados` e `radar_encerrar_sessao`; os delimitadores PL/pgSQL estão balanceados. Isso é uma verificação estática preliminar, não análise sintática completa de PostgreSQL nem execução no Supabase.
 
 O módulo não deve ser mesclado até que a migração seja executada em QA, todos os RPCs sejam confirmados e os testes do checklist passem. Ainda estão pendentes gestão de usuários/permissões e portal de transportadora com dados filtrados no backend.
+
+
+## 13. Modelo de identidade e perfis confirmado (11/10/2026)
+
+Consulta ao esquema do Supabase mostrou:
+
+- `usuarios` guarda a identidade central por empresa: `company_id`, `login`, `nome`, `senha_hash`, `role`, `ativo`, `email` e `obrigar_troca_senha`.
+- `module_users` já é o vínculo por módulo: `company_id`, `modulo`, `login`, `perfil`, `ativo` e `created_by`. A gestão do Radar deve reutilizar esse vínculo para habilitar/desabilitar o módulo e definir o perfil Radar.
+- `usuarios_operacionais` é uma estrutura diferente, com `origem`, `modulo`, `nivel`, `versao`, datas e credenciais próprias. Não deve ser adotada para o Radar sem confirmar seu contrato e sem provar que ela é o cadastro canônico para esse módulo.
+- As três tabelas têm RLS habilitada. Isso, isoladamente, não comprova que as políticas estejam corretas; acesso via RPC `SECURITY DEFINER` precisa validar autorização explicitamente.
+- Não apareceu tabela de transportadoras, vínculos usuário-transportadora ou matriz de permissões granulares no resultado enviado. Isso não prova inexistência absoluta de outros objetos, mas essas estruturas ainda não foram identificadas.
+- O HTML atual armazena transportadoras/cargas/cotações dentro do payload JSONB da empresa. Enquanto a RPC retorna o payload inteiro, esconder menus ou filtrar itens em JavaScript não isola uma transportadora de outra.
+
+### Consequência de arquitetura
+
+1. Reusar `usuarios` para identidade e `module_users` para vínculo/perfil do Radar.
+2. Não fazer CRUD direto nessas tabelas a partir do frontend; criar RPCs com autorização server-side e escopo estrito por empresa.
+3. Antes de definir inserção/alteração, revisar chaves únicas e políticas RLS reais para `usuarios` e `module_users`.
+4. Para permissões configuráveis e portal de transportadoras, primeiro separar as operações protegidas do payload único ou criar RPCs dedicadas e tabelas relacionais específicas para os vínculos. Não liberar o perfil `TRANSPORTADORA` pelo atual modelo de payload integral.
