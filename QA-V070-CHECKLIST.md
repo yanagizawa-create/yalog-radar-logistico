@@ -18,6 +18,8 @@
 - [x] Contrato da RPC genérica `validar_handoff_modulo` revisado; implementação isolada `radar_validar_handoff` adicionada à migração da branch.
 - [ ] Migração que cria `radar_validar_handoff` aplicada e validada no Supabase de QA.
 - [x] Restauração automática de sessão por `sessionStorage` adicionada ao boot para F5/Ctrl+R; sessão sempre revalidada no backend.
+- [x] V071: removido o seletor de perfil de demonstração do cabeçalho; a interface exibe o perfil retornado pela autenticação do servidor, sem permitir alternância manual de embarcadora/transportadora.
+- [ ] Portal de transportadoras permanece bloqueado no backend até existir escopo de cargas validado por transportadora; não liberar usuários de transportadora com base apenas em filtro visual.
 - [ ] Testes em navegador concluídos.
 
 ## Roteiro funcional — executar somente no tenant isolado de QA
